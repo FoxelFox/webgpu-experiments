@@ -5,6 +5,6 @@
     "esbuild-plugin-glsl": "^1.2.1"
   },
   "scripts": {
-    "build": "esbuild"
+    "build": "node esbuild.mjs"
   }
 }

@@ -7,9 +7,17 @@ export class Blub {
 	device
 	context
 	pipeline
+	devicePixelRatio = window.devicePixelRatio || 1;
 
 	constructor() {
 		this.canvas = document.getElementsByTagName("canvas")[0];
+		this.setCanvasSize();
+		window.addEventListener("resize", this.setCanvasSize);
+	}
+
+	setCanvasSize = () => {
+		this.canvas.width = window.innerWidth * this.devicePixelRatio;
+		this.canvas.height = window.innerHeight * this.devicePixelRatio;
 	}
 
 	async init() {
@@ -17,10 +25,6 @@ export class Blub {
 		this.device = await adapter.requestDevice();
 
 		this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
-
-		const devicePixelRatio = window.devicePixelRatio || 1;
-		this.canvas.width = this.canvas.clientWidth * devicePixelRatio;
-		this.canvas.height = this.canvas.clientHeight * devicePixelRatio;
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
 		this.context.configure({
@@ -32,6 +36,7 @@ export class Blub {
 		this.pipeline = this.device.createRenderPipeline({
 			layout: 'auto',
 			vertex: {
+
 				module: this.device.createShaderModule({
 					code: vertexShader,
 				}),
@@ -54,7 +59,9 @@ export class Blub {
 		});
 	}
 
-	update() {
+
+
+	update = () => {
 		const commandEncoder = this.device.createCommandEncoder();
 		const textureView = this.context.getCurrentTexture().createView();
 
@@ -65,6 +72,7 @@ export class Blub {
 					clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
 					loadOp: 'clear',
 					storeOp: 'store',
+
 				},
 			],
 		};
@@ -75,6 +83,7 @@ export class Blub {
 		passEncoder.end();
 
 		this.device.queue.submit([commandEncoder.finish()]);
+		requestAnimationFrame(this.update);
 	}
 }
 
