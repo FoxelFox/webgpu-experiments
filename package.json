@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@webgpu/types": "^0.1.32",
     "esbuild": "^0.17.18",
     "esbuild-plugin-glsl": "^1.2.1"
   },
