@@ -1,4 +1,3 @@
-import fragment from "fragment.wsgl"
-
+import fragment from "./fragment.wgsl"
 
 console.log(fragment)
