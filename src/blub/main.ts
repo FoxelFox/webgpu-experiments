@@ -1,5 +1,4 @@
-import fragmentShader from "./blub.frag.wgsl"
-import vertexShader from "./blub.vert.wgsl"
+import blubShader from "./blub.wgsl"
 
 export class Blub {
 
@@ -38,15 +37,15 @@ export class Blub {
 			vertex: {
 
 				module: this.device.createShaderModule({
-					code: vertexShader,
+					code: blubShader,
 				}),
-				entryPoint: 'main',
+				entryPoint: 'vert_main',
 			},
 			fragment: {
 				module: this.device.createShaderModule({
-					code: fragmentShader,
+					code: blubShader,
 				}),
-				entryPoint: 'main',
+				entryPoint: 'frag_main',
 				targets: [
 					{
 						format: presentationFormat,
