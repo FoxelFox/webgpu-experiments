@@ -1,9 +1,10 @@
+import {device, init} from "../global";
 import blubShader from "./blub.wgsl"
+import {quad} from "../buffer/primitive";
 
 export class Blub {
 
 	canvas: HTMLCanvasElement;
-	device
 	context
 	pipeline
 	devicePixelRatio = window.devicePixelRatio || 1;
@@ -15,34 +16,42 @@ export class Blub {
 	}
 
 	setCanvasSize = () => {
-		this.canvas.width = window.innerWidth * this.devicePixelRatio;
-		this.canvas.height = window.innerHeight * this.devicePixelRatio;
+		this.canvas.width = window.innerWidth * devicePixelRatio;
+		this.canvas.height = window.innerHeight * devicePixelRatio;
 	}
 
 	async init() {
-		const adapter = await navigator.gpu.requestAdapter();
-		this.device = await adapter.requestDevice();
+		
+		await init();
 
 		this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
 		this.context.configure({
-			device: this.device,
+			device: device,
 			format: presentationFormat,
 			alphaMode: 'premultiplied',
 		});
 
-		this.pipeline = this.device.createRenderPipeline({
+		this.pipeline = device.createRenderPipeline({
 			layout: 'auto',
 			vertex: {
 
-				module: this.device.createShaderModule({
+				module: device.createShaderModule({
 					code: blubShader,
 				}),
 				entryPoint: 'vert_main',
+				buffers: [{
+					arrayStride: 2 * 4,
+					attributes: [{
+						shaderLocation: 0,
+						format: "float32x2",
+						offset: 0
+					}]
+				}]
 			},
 			fragment: {
-				module: this.device.createShaderModule({
+				module: device.createShaderModule({
 					code: blubShader,
 				}),
 				entryPoint: 'frag_main',
@@ -53,7 +62,7 @@ export class Blub {
 				],
 			},
 			primitive: {
-				topology: 'triangle-list',
+				topology: 'triangle-list'
 			},
 		});
 	}
@@ -61,7 +70,7 @@ export class Blub {
 
 
 	update = () => {
-		const commandEncoder = this.device.createCommandEncoder();
+		const commandEncoder = device.createCommandEncoder();
 		const textureView = this.context.getCurrentTexture().createView();
 
 		const renderPassDescriptor: GPURenderPassDescriptor = {
@@ -78,10 +87,11 @@ export class Blub {
 
 		const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 		passEncoder.setPipeline(this.pipeline);
-		passEncoder.draw(3, 1, 0, 0);
+		passEncoder.setVertexBuffer(0, quad(1));
+		passEncoder.draw(6, 1, 0, 0);
 		passEncoder.end();
 
-		this.device.queue.submit([commandEncoder.finish()]);
+		device.queue.submit([commandEncoder.finish()]);
 		requestAnimationFrame(this.update);
 	}
 }
