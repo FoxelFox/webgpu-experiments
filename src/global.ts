@@ -3,5 +3,5 @@ export async function init() {
 	device = await adapter.requestDevice();
 }
 
-export let device;
-export let adapter;
+export let device: GPUDevice;
+export let adapter: GPUAdapter;
