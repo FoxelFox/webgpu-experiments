@@ -11,7 +11,7 @@ export class Blub {
 	pipeline
 	devicePixelRatio = window.devicePixelRatio || 1;
 
-	uniform;
+	uniform: UniformBuffer;
 	uniformBindGroup
 
 	constructor() {
@@ -30,7 +30,7 @@ export class Blub {
 
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create(),
-			blub: 23
+			blub: 0.5
 		});
 
 		this.canvas = document.getElementsByTagName("canvas")[0];
@@ -83,7 +83,7 @@ export class Blub {
 			layout: this.pipeline.getBindGroupLayout(0),
 			entries: [{
 				binding: 0,
-				resource: {buffer: un}
+				resource: {buffer: this.uniform.buffer}
 			}]
 		})
 	}
@@ -91,6 +91,7 @@ export class Blub {
 
 
 	update = () => {
+		this.uniform.update();
 		const commandEncoder = device.createCommandEncoder();
 		const textureView = this.context.getCurrentTexture().createView();
 
@@ -107,7 +108,8 @@ export class Blub {
 
 		const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 		passEncoder.setPipeline(this.pipeline);
-		passEncoder.setVertexBuffer(0, quad(0.1));
+		passEncoder.setBindGroup(0, this.uniformBindGroup);
+		passEncoder.setVertexBuffer(0, quad(10));
 		passEncoder.draw(6, 1, 0, 0);
 		passEncoder.end();
 
