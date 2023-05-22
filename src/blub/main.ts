@@ -1,5 +1,6 @@
 import {device, init} from "../global";
-import blubShader from "./blub.wgsl"
+import blubShader from "./blub.wgsl";
+import updateShader from "./update.wgsl";
 import {quad} from "../buffer/primitive";
 import {createUniform, UniformBuffer} from "../buffer/uniform";
 import {mat4} from "wgpu-matrix";
@@ -9,10 +10,15 @@ export class Blub {
 	canvas: HTMLCanvasElement;
 	context
 	pipeline
-	devicePixelRatio = window.devicePixelRatio || 1;
+	computePipeline
+	numParticles = 1000;
+	t = 0;
 
 	uniform: UniformBuffer;
 	uniformBindGroup
+	particleBindGroups: GPUBindGroup[]
+	particleBuffers: GPUBuffer[]
+
 
 	constructor() {
 
@@ -21,7 +27,10 @@ export class Blub {
 	setCanvasSize = () => {
 		this.canvas.width = window.innerWidth * devicePixelRatio;
 		this.canvas.height = window.innerHeight * devicePixelRatio;
-		this.uniform.data.viewMatrix = mat4.ortho(0, this.canvas.width, 0, this.canvas.height, -1, 1);
+
+		const ar = this.canvas.width / this.canvas.height;
+
+		this.uniform.data.viewMatrix = mat4.ortho(-ar, ar, -1, 1, -1, 1);
 	}
 
 	async init() {
@@ -61,6 +70,15 @@ export class Blub {
 						format: "float32x2",
 						offset: 0
 					}]
+				}, {
+					arrayStride: 2 * 4,
+					stepMode: 'instance',
+					attributes: [{
+						// instance position
+						shaderLocation: 1,
+						offset: 0,
+						format: 'float32x2',
+					}]
 				}]
 			},
 			fragment: {
@@ -78,6 +96,61 @@ export class Blub {
 				topology: 'triangle-list'
 			},
 		});
+
+		this.computePipeline = device.createComputePipeline({
+			layout: 'auto',
+			compute: {
+				module: device.createShaderModule({
+					code: updateShader,
+				}),
+				entryPoint: 'main',
+			}
+		});
+
+
+		const initialParticleData = new Float32Array(this.numParticles * 2);
+		for (let i = 0; i < this.numParticles; ++i) {
+			initialParticleData[2 * i + 0] = 2 * (Math.random() - 0.5);
+			initialParticleData[2 * i + 1] = 2 * (Math.random() - 0.5);
+		}
+
+		this.particleBuffers = new Array(2);
+		this.particleBindGroups = new Array(2);
+		for (let i = 0; i < 2; ++i) {
+			this.particleBuffers[i] = device.createBuffer({
+				size: initialParticleData.byteLength,
+				usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
+				mappedAtCreation: true,
+			});
+			new Float32Array(this.particleBuffers[i].getMappedRange()).set(
+				initialParticleData
+			);
+			this.particleBuffers[i].unmap();
+		}
+
+		for (let i = 0; i < 2; ++i) {
+			this.particleBindGroups[i] = device.createBindGroup({
+				layout: this.computePipeline.getBindGroupLayout(0),
+				entries: [
+					{
+						binding: 0,
+						resource: {
+							buffer: this.particleBuffers[i],
+							offset: 0,
+							size: initialParticleData.byteLength,
+						},
+					},
+					{
+						binding: 1,
+						resource: {
+							buffer: this.particleBuffers[(i + 1) % 2],
+							offset: 0,
+							size: initialParticleData.byteLength,
+						},
+					},
+				],
+			});
+		}
 
 		this.uniformBindGroup = device.createBindGroup({
 			layout: this.pipeline.getBindGroupLayout(0),
@@ -106,13 +179,25 @@ export class Blub {
 			],
 		};
 
-		const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-		passEncoder.setPipeline(this.pipeline);
-		passEncoder.setBindGroup(0, this.uniformBindGroup);
-		passEncoder.setVertexBuffer(0, quad(10));
-		passEncoder.draw(6, 1, 0, 0);
-		passEncoder.end();
+		{
+			const passEncoder = commandEncoder.beginComputePass();
+			passEncoder.setPipeline(this.computePipeline);
+			passEncoder.setBindGroup(0, this.particleBindGroups[this.t % 2]);
+			passEncoder.dispatchWorkgroups(Math.ceil(this.numParticles / 64));
+			passEncoder.end();
+		}
 
+		{
+			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+			passEncoder.setPipeline(this.pipeline);
+			passEncoder.setBindGroup(0, this.uniformBindGroup);
+			passEncoder.setVertexBuffer(0, quad(0.01));
+			passEncoder.setVertexBuffer(1, this.particleBuffers[(this.t + 1) % 2]);
+			passEncoder.draw(6, this.numParticles, 0, 0);
+			passEncoder.end();
+		}
+
+		++this.t;
 		device.queue.submit([commandEncoder.finish()]);
 		requestAnimationFrame(this.update);
 	}

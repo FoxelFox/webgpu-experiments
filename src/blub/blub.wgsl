@@ -14,11 +14,12 @@ struct MyUniform {
 @vertex
 fn vert_main(
     @builtin(instance_index) instanceIdx : u32,
-    @location(0) position : vec4<f32>
+    @location(0) position : vec4<f32>,
+    @location(1) pPos : vec2<f32>
 ) -> VertexOutput {
 
     var output : VertexOutput;
-    output.position = vec4<f32>(position.xy, 0.0, 1.0) * myUniform.view;
+    output.position = myUniform.view * vec4<f32>(position.xy + pPos, 0.0, 1.0) ;
     output.color = vec4(1.0, 0.0, 0.0, 1.0);
 
   return output;
