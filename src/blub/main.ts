@@ -3,7 +3,7 @@ import blubShader from "./blub.wgsl";
 import updateShader from "./update.wgsl";
 import {quad} from "../buffer/primitive";
 import {createUniform, UniformBuffer} from "../buffer/uniform";
-import {mat4} from "wgpu-matrix";
+import {mat4, vec4} from "wgpu-matrix";
 
 export class Blub {
 
@@ -11,11 +11,12 @@ export class Blub {
 	context
 	pipeline
 	computePipeline
-	numParticles = 1000;
+	numParticles = 3000;
 	t = 0;
 
 	uniform: UniformBuffer;
-	uniformBindGroup
+	renderUniformBindGroup
+	computeUniformBindGroup
 	particleBindGroups: GPUBindGroup[]
 	particleBuffers: GPUBuffer[]
 
@@ -33,18 +34,36 @@ export class Blub {
 		this.uniform.data.viewMatrix = mat4.ortho(-ar, ar, -1, 1, -1, 1);
 	}
 
+	setMousePosition = (event) => {
+		// x und y position der maus im Fenster
+		let mouseX = event.clientX;
+		let mouseY = event.clientY;
+
+		// normalisierte Werte (-1 bis 1)
+		let normalizedX = (mouseX / window.innerWidth) * 2 - 1;
+		let normalizedY = -((mouseY / window.innerHeight) * 2 - 1);
+
+		// Bei unterschiedlichen Seitenverhältnissen
+		let aspectRatio = window.innerWidth / window.innerHeight;
+		normalizedX *= aspectRatio;
+
+		this.uniform.data.blub[0] = normalizedX;
+		this.uniform.data.blub[1] = normalizedY;
+	}
+
 	async init() {
 		
 		await init();
 
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create(),
-			blub: 0.5
+			blub: vec4.create()
 		});
 
 		this.canvas = document.getElementsByTagName("canvas")[0];
 		this.setCanvasSize();
 		window.addEventListener("resize", this.setCanvasSize);
+		window.addEventListener("mousemove", this.setMousePosition);
 
 		this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
@@ -148,11 +167,17 @@ export class Blub {
 							size: initialParticleData.byteLength,
 						},
 					},
+					{
+						binding: 2,
+						resource: {
+							buffer: this.uniform.buffer
+						}
+					}
 				],
 			});
 		}
 
-		this.uniformBindGroup = device.createBindGroup({
+		this.renderUniformBindGroup = device.createBindGroup({
 			layout: this.pipeline.getBindGroupLayout(0),
 			entries: [{
 				binding: 0,
@@ -190,7 +215,7 @@ export class Blub {
 		{
 			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 			passEncoder.setPipeline(this.pipeline);
-			passEncoder.setBindGroup(0, this.uniformBindGroup);
+			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
 			passEncoder.setVertexBuffer(0, quad(0.01));
 			passEncoder.setVertexBuffer(1, this.particleBuffers[(this.t + 1) % 2]);
 			passEncoder.draw(6, this.numParticles, 0, 0);

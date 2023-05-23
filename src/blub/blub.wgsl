@@ -6,7 +6,7 @@ struct VertexOutput {
 
 struct MyUniform {
     view: mat4x4<f32>,
-    blub: f32
+    blub: vec4<f32>
 }
 
 @binding(0) @group(0) var <uniform> myUniform: MyUniform;
