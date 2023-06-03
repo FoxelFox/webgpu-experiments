@@ -11,7 +11,7 @@ export class Blub {
 	context
 	pipeline
 	computePipeline
-	numParticles = 3000;
+	numParticles = 1024*16;
 	t = 0;
 
 	uniform: UniformBuffer;
@@ -88,15 +88,19 @@ export class Blub {
 						shaderLocation: 0,
 						format: "float32x2",
 						offset: 0
-					}]
+					}, ]
 				}, {
-					arrayStride: 2 * 4,
+					arrayStride: 4 * 4,
 					stepMode: 'instance',
 					attributes: [{
 						// instance position
-						shaderLocation: 1,
+						shaderLocation: 2,
 						offset: 0,
 						format: 'float32x2',
+					},{
+						shaderLocation: 1,
+						format: "float32x2",
+						offset: 2 * 4
 					}]
 				}]
 			},
@@ -127,10 +131,12 @@ export class Blub {
 		});
 
 
-		const initialParticleData = new Float32Array(this.numParticles * 2);
+		const initialParticleData = new Float32Array(this.numParticles * 4);
 		for (let i = 0; i < this.numParticles; ++i) {
-			initialParticleData[2 * i + 0] = 2 * (Math.random() - 0.5);
-			initialParticleData[2 * i + 1] = 2 * (Math.random() - 0.5);
+			initialParticleData[4 * i + 0] = 2 * (Math.random() - 0.5);
+			initialParticleData[4 * i + 1] = 2 * (Math.random() - 0.5);
+			initialParticleData[4 * i + 2] = 2 * (Math.random() - 0.5) * 0.001;
+			initialParticleData[4 * i + 3] = 2 * (Math.random() - 0.5) * 0.001;
 		}
 
 		this.particleBuffers = new Array(2);
@@ -216,7 +222,7 @@ export class Blub {
 			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 			passEncoder.setPipeline(this.pipeline);
 			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-			passEncoder.setVertexBuffer(0, quad(0.01));
+			passEncoder.setVertexBuffer(0, quad(0.005));
 			passEncoder.setVertexBuffer(1, this.particleBuffers[(this.t + 1) % 2]);
 			passEncoder.draw(6, this.numParticles, 0, 0);
 			passEncoder.end();

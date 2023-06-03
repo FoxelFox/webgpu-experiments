@@ -24,7 +24,8 @@ struct MyUniform {
 
 
 struct Particle {
-	pos : vec2<f32>
+	pos : vec2<f32>,
+	vel: vec2<f32>
 }
 
 struct Particles {
@@ -42,6 +43,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	var index = GlobalInvocationID.x;
 	var vPos = particlesA.particles[index].pos;
+	var vVel = particlesA.particles[index].vel;
 	var pos : vec2<f32>;
 
 	var v = myUniform.blub.x * 0;
@@ -55,9 +57,9 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		}
 
 		pos = particlesA.particles[i].pos.xy;
-		var dis = distance(pos, vPos);
-		var force = 0.01 / pow(dis, 0.01);
-		var vv = normalize( pos - vPos) * force * 0.001;
+		var dis = max(distance(pos, vPos), 0.01);
+		var force = 0.00001 / pow(dis, 2);
+		var vv = normalize( pos - vPos) * force * 0.00001;
 
 		if (dis > 0.25) {
 			offset += vv;
@@ -69,29 +71,35 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	// mouse
 	var dis = distance(myUniform.blub.xy, vPos);
-	var force = 0.01 / pow(dis, 0.01);
-	var vv = normalize( myUniform.blub.xy - vPos) * force * 0.001;
+	var force = 0.01 / pow(dis, 2);
+	var vv = normalize( myUniform.blub.xy - vPos) * force * 0.0001;
 
 
-	offset -= vv * 500/ dis;
+	offset -= vv * 2/ dis;
 
 
+	vVel += offset;
+	vVel = clamp(vVel, vec2(-0.01), vec2(0.01));
 
-	vPos = mix(vPos, vPos + clamp(offset, vec2(-0.1), vec2(0.1)), 0.5);
 
 	// Wrap around boundary
-	if (vPos.x < -1.5) {
-		vPos.x = 1.5;
+	if (vPos.x < -1.0) {
+		vVel.x += 0.0001;
 	}
-	if (vPos.x > 1.5) {
-		vPos.x = -1.5;
+	if (vPos.x > 1.0) {
+		vVel.x -= 0.0001;
 	}
-	if (vPos.y < -1.5) {
-		vPos.y = 1.5;
+	if (vPos.y < -1.0) {
+		vVel.y += 0.0001;
 	}
-	if (vPos.y > 1.5) {
-		vPos.y = -1.5;
+	if (vPos.y > 1.0) {
+		vVel.y -= 0.0001;
 	}
 	// Write back
+	vVel *= 0.95;
+    vPos += vVel;
+
+    // Write back
+    particlesB.particles[index].vel = vVel;
 	particlesB.particles[index].pos = vPos;
 }
