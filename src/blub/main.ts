@@ -16,7 +16,6 @@ export class Blub {
 
 	uniform: UniformBuffer;
 	renderUniformBindGroup
-	computeUniformBindGroup
 	particleBindGroups: GPUBindGroup[]
 	particleBuffers: GPUBuffer[]
 
@@ -35,15 +34,13 @@ export class Blub {
 	}
 
 	setMousePosition = (event) => {
-		// x und y position der maus im Fenster
+
 		let mouseX = event.clientX;
 		let mouseY = event.clientY;
 
-		// normalisierte Werte (-1 bis 1)
 		let normalizedX = (mouseX / window.innerWidth) * 2 - 1;
 		let normalizedY = -((mouseY / window.innerHeight) * 2 - 1);
 
-		// Bei unterschiedlichen Seitenverhältnissen
 		let aspectRatio = window.innerWidth / window.innerHeight;
 		normalizedX *= aspectRatio;
 
