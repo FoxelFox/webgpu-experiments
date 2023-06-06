@@ -11,7 +11,7 @@ export class Blub {
 	context
 	pipeline
 	computePipeline
-	numParticles = 1024*16;
+	numParticles = 1024*4;
 	t = 0;
 
 	uniform: UniformBuffer;
@@ -87,17 +87,23 @@ export class Blub {
 						offset: 0
 					}, ]
 				}, {
-					arrayStride: 4 * 4,
+					arrayStride: 6 * 4,
 					stepMode: 'instance',
 					attributes: [{
 						// instance position
-						shaderLocation: 2,
+						shaderLocation: 3,
 						offset: 0,
 						format: 'float32x2',
-					},{
+					}, {
+						// instance velocity
 						shaderLocation: 1,
 						format: "float32x2",
 						offset: 2 * 4
+					}, {
+						// instance force
+						shaderLocation: 2,
+						format: "float32x2",
+						offset: 4 * 4
 					}]
 				}]
 			},
@@ -128,12 +134,14 @@ export class Blub {
 		});
 
 
-		const initialParticleData = new Float32Array(this.numParticles * 4);
+		const initialParticleData = new Float32Array(this.numParticles * 6);
 		for (let i = 0; i < this.numParticles; ++i) {
-			initialParticleData[4 * i + 0] = 2 * (Math.random() - 0.5);
-			initialParticleData[4 * i + 1] = 2 * (Math.random() - 0.5);
-			initialParticleData[4 * i + 2] = 2 * (Math.random() - 0.5) * 0.001;
-			initialParticleData[4 * i + 3] = 2 * (Math.random() - 0.5) * 0.001;
+			initialParticleData[6 * i + 0] = 2 * (Math.random() - 0.5);
+			initialParticleData[6 * i + 1] = 2 * (Math.random() - 0.5);
+			initialParticleData[6 * i + 2] = 2 * (Math.random() - 0.5) * 0.01;
+			initialParticleData[6 * i + 3] = 2 * (Math.random() - 0.5) * 0.01;
+			initialParticleData[6 * i + 4] = 2 * (Math.random() - 0.5) * 0.0001;
+			initialParticleData[6 * i + 5] = 2 * (Math.random() - 0.5) * 0.0001;
 		}
 
 		this.particleBuffers = new Array(2);

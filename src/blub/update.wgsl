@@ -25,7 +25,8 @@ struct MyUniform {
 
 struct Particle {
 	pos : vec2<f32>,
-	vel: vec2<f32>
+	vel: vec2<f32>,
+	force: vec2<f32>
 }
 
 struct Particles {
@@ -44,6 +45,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	var index = GlobalInvocationID.x;
 	var vPos = particlesA.particles[index].pos;
 	var vVel = particlesA.particles[index].vel;
+	var vForce = particlesA.particles[index].force;
 	var pos : vec2<f32>;
 
 	var v = myUniform.blub.x * 0;
@@ -57,49 +59,50 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		}
 
 		pos = particlesA.particles[i].pos.xy;
-		var dis = max(distance(pos, vPos), 0.01);
-		var force = 0.00001 / pow(dis, 2);
-		var vv = normalize( pos - vPos) * force * 0.00001;
+		var dis = distance(pos, vPos) + 0.01;
+		var force = 0.00000001 / pow(pow(dis, 2), -1.5);
+		var vv = (pos - vPos) * force;
 
-		if (dis > 0.25) {
+		if (dis > 0.02) {
 			offset += vv;
 		} else {
 			offset -= vv * 10/ dis;
+			//offset *=0.5;
 		}
 
 	}
 
 	// mouse
-	var dis = distance(myUniform.blub.xy, vPos);
-	var force = 0.01 / pow(dis, 2);
-	var vv = normalize( myUniform.blub.xy - vPos) * force * 0.0001;
+//	var dis = distance(myUniform.blub.xy, vPos) + 0.01;
+//	var force = 0.0001 / pow(pow(dis, 2), -1.5);
+//	var vv = normalize( myUniform.blub.xy - vPos) * force;
+//	offset += vv * 2/ dis;
 
-
-	offset -= vv * 2/ dis;
-
-
-	vVel += offset;
-	vVel = clamp(vVel, vec2(-0.01), vec2(0.01));
+	vForce += offset;
+	vVel += vForce;
+	//vVel = clamp(vVel, vec2(-0.01), vec2(0.01));
 
 
 	// Wrap around boundary
 	if (vPos.x < -1.0) {
-		vVel.x += 0.0001;
+		vForce.x += 0.001;
 	}
 	if (vPos.x > 1.0) {
-		vVel.x -= 0.0001;
+		vForce.x -= 0.001;
 	}
 	if (vPos.y < -1.0) {
-		vVel.y += 0.0001;
+		vForce.y += 0.001;
 	}
 	if (vPos.y > 1.0) {
-		vVel.y -= 0.0001;
+		vForce.y -= 0.001;
 	}
 	// Write back
-	vVel *= 0.95;
+	vForce *= 0.01;
+	//vVel *= 0.999;
     vPos += vVel;
 
     // Write back
     particlesB.particles[index].vel = vVel;
 	particlesB.particles[index].pos = vPos;
+	particlesB.particles[index].force = vForce;
 }

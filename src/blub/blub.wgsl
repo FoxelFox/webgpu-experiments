@@ -16,7 +16,8 @@ fn vert_main(
     @builtin(instance_index) instanceIdx : u32,
     @location(0) position : vec4<f32>,
     @location(1) velocity : vec4<f32>,
-    @location(2) pPos : vec2<f32>
+    @location(2) force : vec4<f32>,
+    @location(3) pPos : vec2<f32>
 ) -> VertexOutput {
 
     var output : VertexOutput;
