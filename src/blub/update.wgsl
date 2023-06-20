@@ -15,13 +15,10 @@ fn rand() -> f32 {
 	return rand_seed.y;
 }
 
-
 struct MyUniform {
     view: mat4x4<f32>,
     blub: vec4<f32>
 }
-
-
 
 struct Particle {
 	pos : vec2<f32>,
@@ -32,8 +29,6 @@ struct Particle {
 struct Particles {
 	particles : array<Particle>,
 }
-
-
 
 @binding(0) @group(0) var<storage, read> particlesA : Particles;
 @binding(1) @group(0) var<storage, read_write> particlesB : Particles;
@@ -59,14 +54,14 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		}
 
 		pos = particlesA.particles[i].pos.xy;
-		var dis = distance(pos, vPos) + 0.01;
+		var dis = distance(pos, vPos) + 0.001;
 		var force = 0.00000001 / pow(pow(dis, 2), -1.5);
 		var vv = (pos - vPos) * force;
 
 		if (dis > 0.02) {
 			offset += vv;
 		} else {
-			offset -= vv * 10/ dis;
+			//offset -= vv * 100/ dis;
 			//offset *=0.5;
 		}
 
@@ -80,24 +75,25 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	vForce += offset;
 	vVel += vForce;
-	//vVel = clamp(vVel, vec2(-0.01), vec2(0.01));
+	//vVel = clamp(vVel, vec2(-0.025), vec2(0.025)); // like speed of light limit
 
 
 	// Wrap around boundary
-	if (vPos.x < -1.0) {
-		vForce.x += 0.001;
+	var box = 1.0;
+	if (vPos.x < -box) {
+		vForce.x += 0.0001;
 	}
-	if (vPos.x > 1.0) {
-		vForce.x -= 0.001;
+	if (vPos.x > box) {
+		vForce.x -= 0.0001;
 	}
-	if (vPos.y < -1.0) {
-		vForce.y += 0.001;
+	if (vPos.y < -box) {
+		vForce.y += 0.0001;
 	}
-	if (vPos.y > 1.0) {
-		vForce.y -= 0.001;
+	if (vPos.y > box) {
+		vForce.y -= 0.0001;
 	}
 	// Write back
-	vForce *= 0.01;
+	vForce *= 0.02;
 	//vVel *= 0.999;
     vPos += vVel;
 

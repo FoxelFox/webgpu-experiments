@@ -11,7 +11,7 @@ export class Blub {
 	context
 	pipeline
 	computePipeline
-	numParticles = 1024*4;
+	numParticles = 1024*16;
 	t = 0;
 
 	uniform: UniformBuffer;
@@ -46,6 +46,21 @@ export class Blub {
 
 		this.uniform.data.blub[0] = normalizedX;
 		this.uniform.data.blub[1] = normalizedY;
+	}
+
+	// THX ChatGPT
+	calculateInitialVelocity(x: number, y: number, angularVelocity: number): { x: number, y: number } {
+		// Berechne den Abstand zum Zentrum der Galaxie
+		const r = Math.sqrt(x * x + y * y);
+
+		// Berechne die Richtung der Geschwindigkeit, die senkrecht zur Verbindungslinie zum Zentrum stehen soll
+		const theta = Math.atan2(y, x) + Math.PI / 2;
+
+		// Setze die Geschwindigkeit und gebe sie als ein 2D-Vector zurück
+		const vx = angularVelocity * r * Math.cos(theta);
+		const vy = angularVelocity * r * Math.sin(theta);
+
+		return {x: vx, y: vy};
 	}
 
 	async init() {
@@ -136,12 +151,16 @@ export class Blub {
 
 		const initialParticleData = new Float32Array(this.numParticles * 6);
 		for (let i = 0; i < this.numParticles; ++i) {
-			initialParticleData[6 * i + 0] = 2 * (Math.random() - 0.5);
-			initialParticleData[6 * i + 1] = 2 * (Math.random() - 0.5);
-			initialParticleData[6 * i + 2] = 2 * (Math.random() - 0.5) * 0.01;
-			initialParticleData[6 * i + 3] = 2 * (Math.random() - 0.5) * 0.01;
-			initialParticleData[6 * i + 4] = 2 * (Math.random() - 0.5) * 0.0001;
-			initialParticleData[6 * i + 5] = 2 * (Math.random() - 0.5) * 0.0001;
+			const px = 2 * (Math.random() - 0.5) * 0.8;
+			const py = 2 * (Math.random() - 0.5) * 0.8;
+			const v = this.calculateInitialVelocity(px, py, -0.01);
+
+			initialParticleData[6 * i + 0] = px;
+			initialParticleData[6 * i + 1] = py;
+			initialParticleData[6 * i + 2] = v.x + (Math.random() - 0.5) * 0.001;
+			initialParticleData[6 * i + 3] = v.y + (Math.random() - 0.5) * 0.001;
+			initialParticleData[6 * i + 4] = 2 * (Math.random() - 0.5) * 0.0001; // fx
+			initialParticleData[6 * i + 5] = 2 * (Math.random() - 0.5) * 0.0001; // fy
 		}
 
 		this.particleBuffers = new Array(2);
@@ -227,7 +246,7 @@ export class Blub {
 			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 			passEncoder.setPipeline(this.pipeline);
 			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-			passEncoder.setVertexBuffer(0, quad(0.005));
+			passEncoder.setVertexBuffer(0, quad(0.003));
 			passEncoder.setVertexBuffer(1, this.particleBuffers[(this.t + 1) % 2]);
 			passEncoder.draw(6, this.numParticles, 0, 0);
 			passEncoder.end();
