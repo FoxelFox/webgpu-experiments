@@ -4,6 +4,7 @@ import updateShader from "./update.wgsl";
 import {quad} from "../buffer/primitive";
 import {createUniform, UniformBuffer} from "../buffer/uniform";
 import {mat4, vec4} from "wgpu-matrix";
+import p5 from 'p5';
 
 export class Blub {
 
@@ -11,7 +12,7 @@ export class Blub {
 	context
 	pipeline
 	computePipeline
-	numParticles = 1024*16;
+	numParticles = 1024*64;
 	t = 0;
 
 	uniform: UniformBuffer;
@@ -49,7 +50,10 @@ export class Blub {
 	}
 
 	// THX ChatGPT
-	calculateInitialVelocity(x: number, y: number, angularVelocity: number): { x: number, y: number } {
+	calculateInitialVelocity(x: number, y: number, angularVelocity: number, noise: p5): { x: number, y: number } {
+		const noiseScale = 10;
+
+		angularVelocity += (noise.noise(x * noiseScale, y * noiseScale) - 0.5) * 2 * 0.01;
 		// Berechne den Abstand zum Zentrum der Galaxie
 		const r = Math.sqrt(x * x + y * y);
 
@@ -57,10 +61,23 @@ export class Blub {
 		const theta = Math.atan2(y, x) + Math.PI / 2;
 
 		// Setze die Geschwindigkeit und gebe sie als ein 2D-Vector zurück
-		const vx = angularVelocity * r * Math.cos(theta);
-		const vy = angularVelocity * r * Math.sin(theta);
+		const vx = angularVelocity * Math.pow(r *1.2+0.25,2) * Math.cos(theta)
+		const vy = angularVelocity * Math.pow(r *1.2+0.25,2) * Math.sin(theta)
 
 		return {x: vx, y: vy};
+	}
+
+	// THX ChatGPT
+	generateRandomParticle(radius: number, noise: p5): { x: number, y: number } {
+		// Wähle den Radius und den Winkel zufällig aus
+		const r = Math.sqrt(Math.random()) * radius;
+		const theta = Math.random() * 2 * Math.PI;
+
+		// Berechne die kartesischen Koordinaten
+		const x = r * Math.cos(theta);
+		const y = r * Math.sin(theta);
+
+		return {x, y};
 	}
 
 	async init() {
@@ -150,17 +167,17 @@ export class Blub {
 
 
 		const initialParticleData = new Float32Array(this.numParticles * 6);
+		const noise = new p5();
 		for (let i = 0; i < this.numParticles; ++i) {
-			const px = 2 * (Math.random() - 0.5) * 0.8;
-			const py = 2 * (Math.random() - 0.5) * 0.8;
-			const v = this.calculateInitialVelocity(px, py, -0.01);
+			const p = this.generateRandomParticle(0.5, noise);
+			const v = this.calculateInitialVelocity(p.x, p.y, -0.012, noise);
 
-			initialParticleData[6 * i + 0] = px;
-			initialParticleData[6 * i + 1] = py;
+			initialParticleData[6 * i + 0] = p.x;
+			initialParticleData[6 * i + 1] = p.y;
 			initialParticleData[6 * i + 2] = v.x + (Math.random() - 0.5) * 0.001;
 			initialParticleData[6 * i + 3] = v.y + (Math.random() - 0.5) * 0.001;
-			initialParticleData[6 * i + 4] = 2 * (Math.random() - 0.5) * 0.0001; // fx
-			initialParticleData[6 * i + 5] = 2 * (Math.random() - 0.5) * 0.0001; // fy
+			initialParticleData[6 * i + 4] = 0;//2 * (Math.random() - 0.5) * 0.0001; // fx
+			initialParticleData[6 * i + 5] = 0;//2 * (Math.random() - 0.5) * 0.0001; // fy
 		}
 
 		this.particleBuffers = new Array(2);
@@ -246,7 +263,7 @@ export class Blub {
 			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 			passEncoder.setPipeline(this.pipeline);
 			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-			passEncoder.setVertexBuffer(0, quad(0.003));
+			passEncoder.setVertexBuffer(0, quad(0.001));
 			passEncoder.setVertexBuffer(1, this.particleBuffers[(this.t + 1) % 2]);
 			passEncoder.draw(6, this.numParticles, 0, 0);
 			passEncoder.end();

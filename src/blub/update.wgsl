@@ -55,15 +55,15 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 		pos = particlesA.particles[i].pos.xy;
 		var dis = distance(pos, vPos) + 0.001;
-		var force = 0.00000001 / pow(pow(dis, 2), -1.5);
-		var vv = (pos - vPos) * force;
+		var force = 2 / pow(dis, 2);
+		var vv = (pos - vPos) * force * 0.000000001;
 
-		if (dis > 0.02) {
+		//if (dis > 0.2) {
 			offset += vv;
-		} else {
-			//offset -= vv * 100/ dis;
+		//} else {
+		//	offset -= vv * 0.01/ dis;
 			//offset *=0.5;
-		}
+		//}
 
 	}
 
@@ -93,7 +93,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		vForce.y -= 0.0001;
 	}
 	// Write back
-	vForce *= 0.02;
+	vForce *= 0.0;
 	//vVel *= 0.999;
     vPos += vVel;
 
