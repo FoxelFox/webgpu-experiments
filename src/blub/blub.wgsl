@@ -24,7 +24,7 @@ fn vert_main(
     output.position = myUniform.view * vec4<f32>(position.xy + pPos, 0.0, 1.0) ;
     //output.color = vec4(normalize(velocity.xy) * 0.5 + 0.5, pow(length(velocity.xy) * 100, 0.1), 1.0);
     var len = pow(length(velocity.xy) * 150,3)+0.05;
-	output.color = vec4(len, len/2 - 0.4,len/2 + 0.2,1.0);
+	output.color = vec4(1-len, len - 0.4,len/1.5 + 0.2,1.0) + 0;
   return output;
 }
 

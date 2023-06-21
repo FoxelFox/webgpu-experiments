@@ -53,7 +53,7 @@ export class Blub {
 	calculateInitialVelocity(x: number, y: number, angularVelocity: number, noise: p5): { x: number, y: number } {
 		const noiseScale = 10;
 
-		angularVelocity += (noise.noise(x * noiseScale, y * noiseScale) - 0.5) * 2 * 0.01;
+		angularVelocity += (noise.noise(x * noiseScale, y * noiseScale) - 0.5) * 2 * 0.005;
 		// Berechne den Abstand zum Zentrum der Galaxie
 		const r = Math.sqrt(x * x + y * y);
 
@@ -61,8 +61,8 @@ export class Blub {
 		const theta = Math.atan2(y, x) + Math.PI / 2;
 
 		// Setze die Geschwindigkeit und gebe sie als ein 2D-Vector zurück
-		const vx = angularVelocity * Math.pow(r *1.2+0.25,2) * Math.cos(theta)
-		const vy = angularVelocity * Math.pow(r *1.2+0.25,2) * Math.sin(theta)
+		const vx = angularVelocity * (r) * Math.cos(theta)
+		const vy = angularVelocity * (r) * Math.sin(theta)
 
 		return {x: vx, y: vy};
 	}
@@ -170,7 +170,7 @@ export class Blub {
 		const noise = new p5();
 		for (let i = 0; i < this.numParticles; ++i) {
 			const p = this.generateRandomParticle(0.5, noise);
-			const v = this.calculateInitialVelocity(p.x, p.y, -0.012, noise);
+			const v = this.calculateInitialVelocity(p.x, p.y, -0.015, noise);
 
 			initialParticleData[6 * i + 0] = p.x;
 			initialParticleData[6 * i + 1] = p.y;
