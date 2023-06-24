@@ -20,6 +20,9 @@ export class Blub {
 	particleBindGroups: GPUBindGroup[]
 	particleBuffers: GPUBuffer[]
 
+	lastTime = Date.now();
+	fps: number = 1;
+
 
 	constructor() {
 
@@ -47,6 +50,10 @@ export class Blub {
 
 		this.uniform.data.blub[0] = normalizedX;
 		this.uniform.data.blub[1] = normalizedY;
+	}
+
+	updateFPS = () => {
+		document.getElementById("fps").innerHTML = this.fps.toFixed(0) + " FPS";
 	}
 
 	// THX ChatGPT
@@ -81,13 +88,14 @@ export class Blub {
 	}
 
 	async init() {
-		
 		await init();
 
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create(),
 			blub: vec4.create()
 		});
+
+		setInterval(this.updateFPS, 250);
 
 		this.canvas = document.getElementsByTagName("canvas")[0];
 		this.setCanvasSize();
@@ -235,7 +243,7 @@ export class Blub {
 
 
 
-	update = () => {
+	update = async () => {
 		this.uniform.update();
 		const commandEncoder = device.createCommandEncoder();
 		const textureView = this.context.getCurrentTexture().createView();
@@ -271,6 +279,19 @@ export class Blub {
 
 		++this.t;
 		device.queue.submit([commandEncoder.finish()]);
+		await device.queue.onSubmittedWorkDone();
+
+		const now = Date.now();
+		const currentFPS = 1000 / (now - this.lastTime);
+
+		// just some filtering
+		if (isFinite(currentFPS)) {
+			this.fps = this.fps * 24 + currentFPS;
+			this.fps /= 25;
+		}
+
+		this.lastTime = now;
+
 		requestAnimationFrame(this.update);
 	}
 }
