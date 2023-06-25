@@ -2,7 +2,7 @@ import { context } from "esbuild";
 import { glsl } from "esbuild-plugin-glsl";
 
 let ctx = await context({
-    entryPoints: ["src/blub.ts"],
+    entryPoints: ["src/main.ts"],
     outfile: "dist/index.js",
     logLevel: "info",
     bundle: true,
