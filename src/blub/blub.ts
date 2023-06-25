@@ -1,4 +1,4 @@
-import {device, init} from "../global";
+import {adapter, device, init} from "../global";
 import blubShader from "./blub.wgsl";
 import updateShader from "./update.wgsl";
 import {quad} from "../buffer/primitive";
@@ -19,9 +19,7 @@ export class Blub {
 	renderUniformBindGroup
 	particleBindGroups: GPUBindGroup[]
 	particleBuffers: GPUBuffer[]
-
-	lastTime = Date.now();
-	fps: number = 1;
+	difficulty: number = 1;
 
 
 	constructor() {
@@ -50,10 +48,6 @@ export class Blub {
 
 		this.uniform.data.blub[0] = normalizedX;
 		this.uniform.data.blub[1] = normalizedY;
-	}
-
-	updateFPS = () => {
-		document.getElementById("fps").innerHTML = this.fps.toFixed(0) + " FPS";
 	}
 
 	// THX ChatGPT
@@ -94,8 +88,6 @@ export class Blub {
 			viewMatrix: mat4.create(),
 			blub: vec4.create()
 		});
-
-		setInterval(this.updateFPS, 250);
 
 		this.canvas = document.getElementsByTagName("canvas")[0];
 		this.setCanvasSize();
@@ -174,6 +166,65 @@ export class Blub {
 		});
 
 
+		this.setDifficulty(1);
+
+
+		this.renderUniformBindGroup = device.createBindGroup({
+			layout: this.pipeline.getBindGroupLayout(0),
+			entries: [{
+				binding: 0,
+				resource: {buffer: this.uniform.buffer}
+			}]
+		})
+	}
+
+
+
+	update = async () => {
+		this.uniform.data.blub[2] = this.difficulty;
+		this.uniform.update();
+		const commandEncoder = device.createCommandEncoder();
+		const textureView = this.context.getCurrentTexture().createView();
+
+		const renderPassDescriptor: GPURenderPassDescriptor = {
+			colorAttachments: [
+				{
+					view: textureView,
+					clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+					loadOp: 'clear',
+					storeOp: 'store',
+				},
+			],
+		};
+
+		{
+			const passEncoder = commandEncoder.beginComputePass();
+			passEncoder.setPipeline(this.computePipeline);
+			passEncoder.setBindGroup(0, this.particleBindGroups[this.t % 2]);
+			passEncoder.dispatchWorkgroups(Math.ceil(this.numParticles / 64));
+			passEncoder.end();
+		}
+
+		{
+			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+			passEncoder.setPipeline(this.pipeline);
+			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
+			passEncoder.setVertexBuffer(0, quad(0.001));
+			passEncoder.setVertexBuffer(1, this.particleBuffers[(this.t + 1) % 2]);
+			passEncoder.draw(6, this.numParticles, 0, 0);
+			passEncoder.end();
+		}
+
+		++this.t;
+		device.queue.submit([commandEncoder.finish()]);
+		// await device.queue.onSubmittedWorkDone();
+
+	}
+
+	setDifficulty(difficulty: number) {
+		this.difficulty = difficulty;
+		this.numParticles = 1024 * difficulty;
+
 		const initialParticleData = new Float32Array(this.numParticles * 6);
 		const noise = new p5();
 		for (let i = 0; i < this.numParticles; ++i) {
@@ -184,12 +235,20 @@ export class Blub {
 			initialParticleData[6 * i + 1] = p.y;
 			initialParticleData[6 * i + 2] = v.x + (Math.random() - 0.5) * 0.001;
 			initialParticleData[6 * i + 3] = v.y + (Math.random() - 0.5) * 0.001;
-			initialParticleData[6 * i + 4] = 0;//2 * (Math.random() - 0.5) * 0.0001; // fx
-			initialParticleData[6 * i + 5] = 0;//2 * (Math.random() - 0.5) * 0.0001; // fy
+			initialParticleData[6 * i + 4] = 0;
+			initialParticleData[6 * i + 5] = 0;
+		}
+
+
+		if (this.particleBuffers) {
+			this.particleBuffers[0].destroy();
+			this.particleBuffers[1].destroy();
 		}
 
 		this.particleBuffers = new Array(2);
 		this.particleBindGroups = new Array(2);
+
+
 		for (let i = 0; i < 2; ++i) {
 			this.particleBuffers[i] = device.createBuffer({
 				size: initialParticleData.byteLength,
@@ -231,70 +290,5 @@ export class Blub {
 				],
 			});
 		}
-
-		this.renderUniformBindGroup = device.createBindGroup({
-			layout: this.pipeline.getBindGroupLayout(0),
-			entries: [{
-				binding: 0,
-				resource: {buffer: this.uniform.buffer}
-			}]
-		})
-	}
-
-
-
-	update = async () => {
-		this.uniform.update();
-		const commandEncoder = device.createCommandEncoder();
-		const textureView = this.context.getCurrentTexture().createView();
-
-		const renderPassDescriptor: GPURenderPassDescriptor = {
-			colorAttachments: [
-				{
-					view: textureView,
-					clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-					loadOp: 'clear',
-					storeOp: 'store',
-				},
-			],
-		};
-
-		{
-			const passEncoder = commandEncoder.beginComputePass();
-			passEncoder.setPipeline(this.computePipeline);
-			passEncoder.setBindGroup(0, this.particleBindGroups[this.t % 2]);
-			passEncoder.dispatchWorkgroups(Math.ceil(this.numParticles / 64));
-			passEncoder.end();
-		}
-
-		{
-			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-			passEncoder.setPipeline(this.pipeline);
-			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-			passEncoder.setVertexBuffer(0, quad(0.001));
-			passEncoder.setVertexBuffer(1, this.particleBuffers[(this.t + 1) % 2]);
-			passEncoder.draw(6, this.numParticles, 0, 0);
-			passEncoder.end();
-		}
-
-		++this.t;
-		device.queue.submit([commandEncoder.finish()]);
-		await device.queue.onSubmittedWorkDone();
-
-		const now = Date.now();
-		const currentFPS = 1000 / (now - this.lastTime);
-
-		// just some filtering
-		if (isFinite(currentFPS)) {
-			this.fps = this.fps * 24 + currentFPS;
-			this.fps /= 25;
-		}
-
-		this.lastTime = now;
-
-		requestAnimationFrame(this.update);
 	}
 }
-
-const blub = new Blub();
-blub.init().then(() => blub.update());
