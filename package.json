@@ -1,12 +1,19 @@
 {
   "dependencies": {
     "@webgpu/types": "^0.1.32",
+    "copy-webpack-plugin": "^11.0.0",
     "esbuild": "^0.17.18",
     "esbuild-plugin-glsl": "^1.2.1",
+    "esbuild-plugin-wasm": "^1.1.0",
     "p5": "^1.6.0",
     "wgpu-matrix": "^2.2.1"
   },
   "scripts": {
-    "build": "node esbuild.mjs"
+    "build": "node esbuild.mjs",
+    "webpack": "webpack",
+    "webpack-serve": "webpack serve"
+  },
+  "devDependencies": {
+    "esbuild-plugin-wasm-pack": "^1.1.0"
   }
 }

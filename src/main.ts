@@ -1,3 +1,7 @@
+import {greet} from "../pkg";
+greet()
+
+
 import {Blub} from "./blub/blub";
 import {device} from "./global";
 
