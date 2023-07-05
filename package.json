@@ -9,9 +9,9 @@
     "wgpu-matrix": "^2.2.1"
   },
   "scripts": {
-    "build": "node esbuild.mjs",
-    "webpack": "webpack",
-    "webpack-serve": "webpack serve"
+    "build": "npm run wasm-pack && npm run build-js",
+    "build-js": "node esbuild.mjs",
+    "wasm-pack": "wasm-pack build --release"
   },
   "devDependencies": {
     "esbuild-plugin-wasm-pack": "^1.1.0"
