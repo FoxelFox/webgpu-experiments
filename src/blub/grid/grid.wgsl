@@ -7,6 +7,15 @@ struct Particles {
 	particles : array<Particle>,
 }
 
+struct Grid {
+	size: vec2<f32>,
+	cells: vec2<i32>,
+	min: vec2<f32>,
+	max: vec2<f32>,
+	indeces: array <i32>
+}
+
+
 @binding(0) @group(0) var<storage, read> particlesA : Particles;
 @binding(1) @group(0) var<storage, read_write> particlesB : Particles;
 @binding(2) @group(0) var <uniform> params: MyUniform;

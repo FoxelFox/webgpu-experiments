@@ -81,8 +81,7 @@ export class Blub {
 		return {x, y};
 	}
 
-	async init() {
-		await init();
+	init() {
 
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create(),
