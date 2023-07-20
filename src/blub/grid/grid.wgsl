@@ -7,18 +7,19 @@ struct Particles {
 	particles : array<Particle>,
 }
 
+struct Cell {
+	midpoint: vec2<f32>,
+	mass: f32
+}
+
 struct Grid {
-	size: vec2<f32>,
-	cells: vec2<i32>,
-	min: vec2<f32>,
-	max: vec2<f32>,
-	indeces: array <i32>
+	resolution: vec2<f32>,
+	cells: array <Cell>
 }
 
 
 @binding(0) @group(0) var<storage, read> particlesA : Particles;
 @binding(1) @group(0) var<storage, read_write> particlesB : Particles;
-@binding(2) @group(0) var <uniform> params: MyUniform;
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {

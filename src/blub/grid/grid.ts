@@ -1,5 +1,5 @@
 import {device} from "../../global";
-import gridShader from "grid.wgsl";
+import gridShader from "./grid.wgsl";
 
 export class Grid {
 
@@ -9,11 +9,11 @@ export class Grid {
 	readBuffer: GPUBuffer;
 
 	// shader Grid struct
-	size: [number, number];
-	cells: [number, number];
-	min: [number, number];
-	max: [number, number];
-	indices: Int32Array;
+	resolution: [number, number];
+	cells: {
+		midpoint: [number, number];
+		mass: number;
+	}[];
 
 	constructor(private numParticles: number) {
 
@@ -31,11 +31,11 @@ export class Grid {
 	}
 
 	init() {
-		this.size = [-1, 1];
-		this.cells = [8, 8];
-		this.min = [-1, -1];
-		this.max = [1, 1];
-		this.indices = new Int32Array(this.indexLength);
+		this.resolution = [8, 8];
+		this.cells = Array(8 * 8).fill({
+			midpoint: [0, 0],
+			mass: 0
+		});
 
 		this.writeBuffer = device.createBuffer({
 			mappedAtCreation: true,
@@ -56,7 +56,6 @@ export class Grid {
 					buffer: this.writeBuffer
 				}
 			}]
-
 		})
 
 
@@ -65,25 +64,21 @@ export class Grid {
 
 	writeToGPU() {
 		const buffer = this.writeBuffer.getMappedRange();
-		const indexLength = this.indexLength;
 		const view = new DataView(buffer);
 
 		let offset = 0;
-		view.setFloat32(offset, this.size[0]); offset += 4;
-		view.setFloat32(offset, this.size[1]); offset += 4;
 
-		view.setInt32(offset, this.cells[0]); offset += 4;
-		view.setInt32(offset, this.cells[1]); offset += 4;
+		view.setFloat32(offset, this.resolution[0]); offset += 4;
+		view.setFloat32(offset, this.resolution[1]); offset += 4;
 
-		view.setFloat32(offset, this.min[0]); offset += 4;
-		view.setFloat32(offset, this.min[1]); offset += 4;
+		for (let x = 0; x < this.resolution[0]; ++x) {
+			for (let y = 0; y < this.resolution[1]; ++y) {
+				const i = x + y * this.resolution[1];
+				view.setFloat32(offset, this.cells[i].midpoint[0]); offset += 4;
+				view.setFloat32(offset, this.cells[i].midpoint[1]); offset += 4;
 
-		view.setFloat32(offset, this.max[0]); offset += 4;
-		view.setFloat32(offset, this.max[1]); offset += 4;
-
-		for (let i = 0; i < indexLength; ++i) {
-			view.setInt32(offset, -1);
-			offset += 4;
+				view.setFloat32(offset, this.cells[i].mass); offset += 4;
+			}
 		}
 
 		this.writeBuffer.unmap();
@@ -109,52 +104,35 @@ export class Grid {
 		const view = new DataView(buffer);
 
 		let offset = 0;
-		this.size[0] = view.getFloat32(offset); offset += 4;
-		this.size[1] = view.getFloat32(offset); offset += 4;
 
-		this.cells[0] = view.getInt32(offset); offset += 4;
-		this.cells[1] = view.getInt32(offset); offset += 4;
-
-		this.min[0] = view.getFloat32(offset); offset += 4;
-		this.min[1] = view.getFloat32(offset); offset += 4;
-
-		this.max[0] = view.getFloat32(offset); offset += 4;
-		this.max[1] = view.getFloat32(offset); offset += 4;
+		this.resolution[0] = view.getFloat32(offset); offset += 4;
+		this.resolution[1] = view.getFloat32(offset); offset += 4;
 
 
-		this.indices = new Int32Array(buffer, offset);
+		let debugMatrix = [];
+		for (let x = 0; x < this.resolution[0]; ++x) {
+			const debugRow = []
+			for (let y = 0; y < this.resolution[1]; ++y) {
+				const i = x + y * this.resolution[1];
+				this.cells[i].midpoint[0] = view.getFloat32(offset); offset += 4;
+				this.cells[i].midpoint[1] = view.getFloat32(offset); offset += 4;
 
-		console.table({
-			numParticles: this.numParticles,
-			size: this.size,
-			cells: this.cells,
-			min: this.min,
-			max: this.max
-		});
+				this.cells[i].mass = view.getFloat32(offset); offset += 4;
 
-
-		let matrix = [];
-		for (let i = 0; i < this.cells[0]; i++) {
-			let row = [];
-			for (let j = 0; j < this.cells[1]; j++) {
-				let cell = [];
-				for (let k = 0; k < 4; k++) {
-					cell.push(this.indices[i * 32 + j * this.numParticles + k]);
-				}
-				row.push(cell.join(', '));
+				debugRow.push([
+					this.cells[i].midpoint[0],
+					this.cells[i].midpoint[1],
+					this.cells[i].mass
+				].join(","));
 			}
-			matrix.push(row);
+			debugMatrix.push(debugRow);
 		}
 
-		console.table(matrix)
-	}
-
-	get indexLength(): number {
-		return this.numParticles * this.cells[0] * this.cells[1];
+		console.table(debugMatrix);
 	}
 
 	get bufferSizeInByte(): number {
-		return 4*2 + 4*2 + 4*2 + 4*2 + this.indexLength * 4;
+		return 4 * 2 + 4 * this.resolution[0] * this.resolution[1] * 3;
 	}
 
 
