@@ -12,6 +12,7 @@ async function main() {
 
 	const grid = new Grid(4);
 
+	grid.run();
 	await grid.readFromGPU();
 
 	const loop = async () => {

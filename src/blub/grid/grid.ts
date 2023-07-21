@@ -31,7 +31,7 @@ export class Grid {
 	}
 
 	init() {
-		this.resolution = [8, 8];
+		this.resolution = [8.0, 8.0];
 		this.cells = Array(8 * 8).fill({
 			midpoint: [0, 0],
 			mass: 0
@@ -40,13 +40,15 @@ export class Grid {
 		this.writeBuffer = device.createBuffer({
 			mappedAtCreation: true,
 			size: this.bufferSizeInByte,
-			usage: GPUBufferUsage.MAP_WRITE | GPUBufferUsage.COPY_SRC
+			usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.STORAGE
 		});
 
 		this.readBuffer = device.createBuffer({
 			size: this.bufferSizeInByte,
 			usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
 		});
+
+		this.writeToGPU();
 
 		this.bindGroup = device.createBindGroup({
 			layout: this.pipeline.getBindGroupLayout(0),
@@ -55,11 +57,31 @@ export class Grid {
 				resource: {
 					buffer: this.writeBuffer
 				}
+
 			}]
 		})
+	}
 
+	run() {
+		const commandEncoder = device.createCommandEncoder();
 
-		this.writeToGPU();
+		const passEncoder = commandEncoder.beginComputePass();
+		passEncoder.setPipeline(this.pipeline);
+		passEncoder.setBindGroup(0, this.bindGroup);
+		passEncoder.dispatchWorkgroups(64);
+		passEncoder.end();
+
+		commandEncoder.copyBufferToBuffer(
+			this.writeBuffer /* source buffer */,
+			0 /* source offset */,
+			this.readBuffer /* destination buffer */,
+			0 /* destination offset */,
+			this.bufferSizeInByte /* size */
+		);
+
+		const gpuCommands = commandEncoder.finish();
+		device.queue.submit([gpuCommands]);
+
 	}
 
 	writeToGPU() {
@@ -68,34 +90,33 @@ export class Grid {
 
 		let offset = 0;
 
-		view.setFloat32(offset, this.resolution[0]); offset += 4;
-		view.setFloat32(offset, this.resolution[1]); offset += 4;
+		view.setFloat32(offset, this.resolution[0], true); offset += 4;
+		view.setFloat32(offset, this.resolution[1], true); offset += 4;
 
 		for (let x = 0; x < this.resolution[0]; ++x) {
 			for (let y = 0; y < this.resolution[1]; ++y) {
 				const i = x + y * this.resolution[1];
-				view.setFloat32(offset, this.cells[i].midpoint[0]); offset += 4;
-				view.setFloat32(offset, this.cells[i].midpoint[1]); offset += 4;
+				view.setFloat32(offset, this.cells[i].midpoint[0], true); offset += 4;
+				view.setFloat32(offset, this.cells[i].midpoint[1], true); offset += 4;
 
-				view.setFloat32(offset, this.cells[i].mass); offset += 4;
+				view.setFloat32(offset, this.cells[i].mass, true); offset += 4;
 			}
 		}
-
 		this.writeBuffer.unmap();
 	}
 
 	async readFromGPU() {
-		const copyEncoder = device.createCommandEncoder();
-		copyEncoder.copyBufferToBuffer(
-			this.writeBuffer /* source buffer */,
-			0 /* source offset */,
-			this.readBuffer /* destination buffer */,
-			0 /* destination offset */,
-			this.bufferSizeInByte /* size */
-		);
-
-		const copyCommands = copyEncoder.finish();
-		device.queue.submit([copyCommands]);
+		// const copyEncoder = device.createCommandEncoder();
+		// copyEncoder.copyBufferToBuffer(
+		// 	this.writeBuffer /* source buffer */,
+		// 	0 /* source offset */,
+		// 	this.readBuffer /* destination buffer */,
+		// 	0 /* destination offset */,
+		// 	this.bufferSizeInByte /* size */
+		// );
+		//
+		// const copyCommands = copyEncoder.finish();
+		// device.queue.submit([copyCommands]);
 
 		// Read buffer.
 		await this.readBuffer.mapAsync(GPUMapMode.READ);
@@ -129,6 +150,7 @@ export class Grid {
 		}
 
 		console.table(debugMatrix);
+		console.log(new Float32Array(buffer))
 	}
 
 	get bufferSizeInByte(): number {

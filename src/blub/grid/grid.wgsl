@@ -1,3 +1,4 @@
+
 struct Particle {
 	pos : vec2<f32>,
 	vel: vec2<f32>
@@ -17,11 +18,13 @@ struct Grid {
 	cells: array <Cell>
 }
 
-
-@binding(0) @group(0) var<storage, read> particlesA : Particles;
-@binding(1) @group(0) var<storage, read_write> particlesB : Particles;
-
+//@binding(0) @group(0) var<storage, read> particles : Particles;
+@binding(0) @group(0) var<storage, read_write> grid : Grid;
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
+	var cell = grid.cells[GlobalInvocationID.x];
+	cell.midpoint = vec2(4,2);
+	cell.mass = 5;
 
+	grid.cells[GlobalInvocationID.x] = cell;
 }

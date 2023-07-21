@@ -1,8 +1,8 @@
-import { build } from "esbuild";
+import { context } from "esbuild";
 import { glsl } from "esbuild-plugin-glsl";
 import {wasmLoader} from "esbuild-plugin-wasm";
 
-await build({
+let ctx = await context({
     entryPoints: ["src/main.ts"],
     outfile: "dist/main.js",
     logLevel: "info",
@@ -10,9 +10,11 @@ await build({
     format: "esm",
     sourcemap: true,
     tsconfig: "tsconfig.json",
-    minify: true,
+    minify: false,
     plugins: [
-        glsl({minify: true}),
+        glsl({minify: false}),
         wasmLoader()
     ]
 }).catch(() => process.exit(1));
+
+await ctx.watch();
