@@ -1,11 +1,11 @@
 import {greet} from "../pkg";
 greet()
 
-import {Blub} from "./blub/blub";
+import {ParticleSystem} from "./blub/particle-system";
 import {device, init} from "./global";
 
 async function main() {
-	const blub = new Blub();
+	const blub = new ParticleSystem();
 	await init();
 	blub.init();
 

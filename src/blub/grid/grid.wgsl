@@ -18,13 +18,15 @@ struct Grid {
 	cells: array <Cell>
 }
 
-//@binding(0) @group(0) var<storage, read> particles : Particles;
+
 @binding(0) @group(0) var<storage, read_write> grid : Grid;
+@binding(1) @group(0) var<storage, read> particles : Particles;
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	var cell = grid.cells[GlobalInvocationID.x];
-	cell.midpoint = vec2(4,2);
-	cell.mass = 5;
+	cell.midpoint.x = grid.resolution.x;
+	cell.midpoint.y = grid.resolution.y + 1;
+	cell.mass = cell.mass + 1;
 
 	grid.cells[GlobalInvocationID.x] = cell;
 }

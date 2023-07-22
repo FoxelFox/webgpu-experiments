@@ -15,7 +15,7 @@ export class Grid {
 		mass: number;
 	}[];
 
-	constructor(private numParticles: number) {
+	constructor() {
 
 		this.pipeline = device.createComputePipeline({
 			layout: 'auto',
@@ -100,8 +100,12 @@ export class Grid {
 				view.setFloat32(offset, this.cells[i].midpoint[1], true); offset += 4;
 
 				view.setFloat32(offset, this.cells[i].mass, true); offset += 4;
+
+				offset += 4; // padding
 			}
 		}
+
+		//console.log("before", new Float32Array(buffer));
 		this.writeBuffer.unmap();
 	}
 
@@ -126,8 +130,9 @@ export class Grid {
 
 		let offset = 0;
 
-		this.resolution[0] = view.getFloat32(offset); offset += 4;
-		this.resolution[1] = view.getFloat32(offset); offset += 4;
+		this.resolution[0] = view.getFloat32(offset, true); offset += 4;
+		this.resolution[1] = view.getFloat32(offset, true); offset += 4;
+
 
 
 		let debugMatrix = [];
@@ -135,10 +140,12 @@ export class Grid {
 			const debugRow = []
 			for (let y = 0; y < this.resolution[1]; ++y) {
 				const i = x + y * this.resolution[1];
-				this.cells[i].midpoint[0] = view.getFloat32(offset); offset += 4;
-				this.cells[i].midpoint[1] = view.getFloat32(offset); offset += 4;
+				this.cells[i].midpoint[0] = view.getFloat32(offset, true); offset += 4;
+				this.cells[i].midpoint[1] = view.getFloat32(offset, true); offset += 4;
 
-				this.cells[i].mass = view.getFloat32(offset); offset += 4;
+				this.cells[i].mass = view.getFloat32(offset, true); offset += 4;
+
+				offset += 4; // padding
 
 				debugRow.push([
 					this.cells[i].midpoint[0],
@@ -149,12 +156,15 @@ export class Grid {
 			debugMatrix.push(debugRow);
 		}
 
+		console.table({
+			resolution: this.resolution
+		})
 		console.table(debugMatrix);
-		console.log(new Float32Array(buffer))
+		//console.log(new Float32Array(buffer))
 	}
 
 	get bufferSizeInByte(): number {
-		return 4 * 2 + 4 * this.resolution[0] * this.resolution[1] * 3;
+		return 4 * 2 + 4 * this.resolution[0] * this.resolution[1] * 4;
 	}
 
 

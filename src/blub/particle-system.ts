@@ -1,12 +1,12 @@
 import {adapter, device, init} from "../global";
-import blubShader from "./blub.wgsl";
-import updateShader from "./update.wgsl";
+import drawParticles from "./draw-particles.wgsl";
+import updateParticles from "./update-particles.wgsl";
 import {quad} from "../buffer/primitive";
 import {createUniform, UniformBuffer} from "../buffer/uniform";
 import {mat4, vec4} from "wgpu-matrix";
 import p5 from 'p5';
 
-export class Blub {
+export class ParticleSystem {
 
 	canvas: HTMLCanvasElement;
 	context
@@ -107,7 +107,7 @@ export class Blub {
 			vertex: {
 
 				module: device.createShaderModule({
-					code: blubShader,
+					code: drawParticles,
 				}),
 				entryPoint: 'vert_main',
 				buffers: [{
@@ -140,7 +140,7 @@ export class Blub {
 			},
 			fragment: {
 				module: device.createShaderModule({
-					code: blubShader,
+					code: drawParticles,
 				}),
 				entryPoint: 'frag_main',
 				targets: [
@@ -158,7 +158,7 @@ export class Blub {
 			layout: 'auto',
 			compute: {
 				module: device.createShaderModule({
-					code: updateShader,
+					code: updateParticles,
 				}),
 				entryPoint: 'main',
 			}
@@ -209,7 +209,7 @@ export class Blub {
 			passEncoder.setPipeline(this.pipeline);
 			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
 			passEncoder.setVertexBuffer(0, quad(0.001));
-			passEncoder.setVertexBuffer(1, this.particleBuffers[(this.t + 1) % 2]);
+			passEncoder.setVertexBuffer(1, this.activeParticleBuffer);
 			passEncoder.draw(6, this.numParticles, 0, 0);
 			passEncoder.end();
 		}
@@ -218,6 +218,10 @@ export class Blub {
 		device.queue.submit([commandEncoder.finish()]);
 		// await device.queue.onSubmittedWorkDone();
 
+	}
+
+	get activeParticleBuffer(): GPUBuffer {
+		return this.particleBuffers[(this.t + 1) % 2];
 	}
 
 	setDifficulty(difficulty: number) {

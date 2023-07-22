@@ -1,7 +1,7 @@
 import {greet} from "../pkg";
 greet()
 
-import {Blub} from "./blub/blub";
+import {ParticleSystem} from "./blub/particle-system";
 import {device, init} from "./global";
 import {Grid} from "./blub/grid/grid";
 
@@ -10,7 +10,10 @@ async function main() {
 
 	await init();
 
-	const grid = new Grid(4);
+	const grid = new Grid();
+	const blub = new ParticleSystem();
+
+	blub.init();
 
 	grid.run();
 	await grid.readFromGPU();
@@ -22,6 +25,7 @@ async function main() {
 		// loop
 
 		requestAnimationFrame(loop);
+
 	}
 
 	await loop();
