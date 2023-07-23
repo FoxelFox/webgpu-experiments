@@ -1,7 +1,8 @@
 
 struct VertexOutput {
   @builtin(position) position : vec4<f32>,
-  @location(0) color : vec4<f32>
+  @location(0) color : vec4<f32>,
+  @location(1) quad_pos : vec2<f32>, // -1..+1
 }
 
 struct MyUniform {
@@ -22,15 +23,16 @@ fn vert_main(
 
     var output : VertexOutput;
     output.position = myUniform.view * vec4<f32>(position.xy + pPos, 0.0, 1.0) ;
-    //output.color = vec4(normalize(velocity.xy) * 0.5 + 0.5, pow(length(velocity.xy) * 100, 0.1), 1.0);
-    var len = pow(length(velocity.xy) * 150,3)+0.05;
-	output.color = vec4(1-len, len - 0.4,len/1.5 + 0.2,1.0) + 0;
+    output.color = vec4(1.0, 0.7, 0.6 ,0.01);
+	output.quad_pos = position.xy;
   return output;
 }
 
 @fragment
-fn frag_main(
-	@location(0) color : vec4<f32>
-) -> @location(0) vec4<f32> {
+fn frag_main(in : VertexOutput) -> @location(0) vec4<f32> {
+  var color = in.color;
+  //var color = vec4(in.quad_pos * 5, 0,1);
+  // Apply a circular particle alpha mask
+  color.a = color.a * max(1.0 - length(in.quad_pos * 100), 0.0);
   return color;
 }

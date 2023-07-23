@@ -39,8 +39,9 @@ export class Grid {
 			this.readBuffer.destroy();
 		}
 
-		this.resolution = [8.0, 8.0];
-		this.cells = Array(8 * 8).fill({
+		const res = 16;
+		this.resolution = [res, res];
+		this.cells = Array(res * res).fill({
 			midpoint: [0, 0],
 			mass: 0
 		});
@@ -82,7 +83,7 @@ export class Grid {
 		const passEncoder = commandEncoder.beginComputePass();
 		passEncoder.setPipeline(this.pipeline);
 		passEncoder.setBindGroup(0, this.bindGroups[t % 2]);
-		passEncoder.dispatchWorkgroups(1);
+		passEncoder.dispatchWorkgroups(Math.ceil(this.resolution[0] * this.resolution[1] / 64));
 		passEncoder.end();
 
 		// commandEncoder.copyBufferToBuffer(

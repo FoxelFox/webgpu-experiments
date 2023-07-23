@@ -149,6 +149,18 @@ export class ParticleSystem {
 				targets: [
 					{
 						format: presentationFormat,
+						blend: {
+							color: {
+								srcFactor: 'src-alpha',
+								dstFactor: 'one',
+								operation: 'add',
+							},
+							alpha: {
+								srcFactor: 'zero',
+								dstFactor: 'one',
+								operation: 'add',
+							},
+						},
 					},
 				],
 			},
@@ -199,7 +211,9 @@ export class ParticleSystem {
 			],
 		};
 
-		this.grid.run(commandEncoder, this.t);
+		//if (this.t % 120 == 0) {
+			this.grid.run(commandEncoder, this.t);
+		//}
 
 		{
 			const passEncoder = commandEncoder.beginComputePass();
@@ -213,7 +227,7 @@ export class ParticleSystem {
 			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 			passEncoder.setPipeline(this.pipeline);
 			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-			passEncoder.setVertexBuffer(0, quad(0.001));
+			passEncoder.setVertexBuffer(0, quad(0.01));
 			passEncoder.setVertexBuffer(1, this.activeParticleBuffer);
 			passEncoder.draw(6, this.numParticles, 0, 0);
 			passEncoder.end();

@@ -73,20 +73,20 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 		if (gridIndexSelf == i) {
 			// remove self from mass
-			cell.midpoint -= vPos;
-			cell.mass -= 1;
+//			cell.midpoint -= vPos;
+//			cell.mass -= 1;
 		}
 
 		if (grid.cells[i].mass >= 1) {
 			pos = cell.midpoint.xy / cell.mass;
-			var dis = distance(pos, vPos) + 0.05;
+			var dis = distance(pos, vPos) + 0.01;
 			var force = (cell.mass / myUniform.blub.z) / pow(dis, 2);
 			var vv = (pos - vPos) * force * 0.00000005;
 
 
 			offset += vv;
 
-			if (dis < 0.02) {
+			if (dis < 0.01) {
 				vVel *=0.99999;
 			}
 		}
@@ -101,26 +101,30 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	vForce += offset;
 	vVel += vForce;
-	vVel = clamp(vVel, vec2(-0.01), vec2(0.01)); // like speed of light limit
+	//vVel = clamp(vVel, vec2(-0.01), vec2(0.01)); // like speed of light limit
 
 
 	// Wrap around boundary
 	var box = 1.0;
 	if (vPos.x < -box) {
 		vForce.x += 0.0001;
+		vVel *=0.99;
 	}
 	if (vPos.x > box) {
 		vForce.x -= 0.0001;
+		vVel *=0.99;
 	}
 	if (vPos.y < -box) {
 		vForce.y += 0.0001;
+		vVel *=0.99;
 	}
 	if (vPos.y > box) {
 		vForce.y -= 0.0001;
+		vVel *=0.99;
 	}
 	// Write back
 	vForce *= 0.0;
-	//vVel *= 0.999;
+	//vVel *= 0.99;
     vPos += vVel;
 
     // Write back

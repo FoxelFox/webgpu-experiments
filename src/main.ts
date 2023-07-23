@@ -14,7 +14,7 @@ async function main() {
 	const particleSystem = new ParticleSystem();
 	particleSystem.init();
 
-	particleSystem.setDifficulty(8);
+	particleSystem.setDifficulty(100);
 	await particleSystem.update();
 
 
@@ -34,8 +34,9 @@ async function main() {
 
 		fps = 1000 / time;
 
-		if (fps > 60) {
-			particleSystem.setDifficulty(++difficulty);
+		if (fps > 60 && difficulty < 1000) {
+			difficulty += 10;
+			particleSystem.setDifficulty(difficulty);
 			score = 0;
 		}
 
