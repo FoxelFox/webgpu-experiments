@@ -1,7 +1,8 @@
-
+// TODO use import feature
 struct Particle {
 	pos : vec2<f32>,
-	vel: vec2<f32>
+	vel: vec2<f32>,
+	force: vec2<f32>
 }
 
 struct Particles {

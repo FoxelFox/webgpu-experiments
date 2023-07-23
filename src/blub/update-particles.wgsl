@@ -13,9 +13,21 @@ struct Particles {
 	particles : array<Particle>,
 }
 
+// TODO use import feature
+struct Cell {
+	midpoint: vec2<f32>,
+	mass: f32
+}
+
+struct Grid {
+	resolution: vec2<f32>,
+	cells: array <Cell>
+}
+
 @binding(0) @group(0) var<storage, read> particlesA : Particles;
 @binding(1) @group(0) var<storage, read_write> particlesB : Particles;
 @binding(2) @group(0) var <uniform> myUniform: MyUniform;
+@binding(3) @group(0) var<storage, read_write> grid : Grid;
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
@@ -24,11 +36,15 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	var vVel = particlesA.particles[index].vel;
 	var vForce = particlesA.particles[index].force;
 	var pos : vec2<f32>;
+	var gridblub = grid.resolution;
 
 	var v = myUniform.blub.x * 0;
 
 
 	var offset: vec2<f32> = vec2(0);
+
+	// OLD SYSTEM
+	/*
 	for (var i = 0u; i < arrayLength(&particlesA.particles) - 1; i++) {
 		if (i == index) {
 			continue;
@@ -45,8 +61,37 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		if (dis < 0.01) {
 			vVel *=0.99999;
 		}
-
 	}
+	*/
+
+	// NEW SYSTEM
+//	/*
+	for (var i = 0u; i < arrayLength(&grid.cells); i++) {
+		var gridIndex = floor((vPos.xy + vec2(1)) * (grid.resolution / 2));
+		var gridIndexSelf = u32(gridIndex.x + grid.resolution.x * gridIndex.y);
+		var cell = grid.cells[i];
+
+		if (gridIndexSelf == i) {
+			// remove self from mass
+			cell.midpoint -= vPos;
+			cell.mass -= 1;
+		}
+
+		if (grid.cells[i].mass >= 1) {
+			pos = cell.midpoint.xy / cell.mass;
+			var dis = distance(pos, vPos) + 0.05;
+			var force = (cell.mass / myUniform.blub.z) / pow(dis, 2);
+			var vv = (pos - vPos) * force * 0.00000005;
+
+
+			offset += vv;
+
+			if (dis < 0.02) {
+				vVel *=0.99999;
+			}
+		}
+	}
+//	*/
 
 	// mouse
 //	var dis = distance(myUniform.blub.xy, vPos) + 0.01;
@@ -56,7 +101,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	vForce += offset;
 	vVel += vForce;
-	//vVel = clamp(vVel, vec2(-0.025), vec2(0.025)); // like speed of light limit
+	vVel = clamp(vVel, vec2(-0.01), vec2(0.01)); // like speed of light limit
 
 
 	// Wrap around boundary

@@ -85,13 +85,13 @@ export class Grid {
 		passEncoder.dispatchWorkgroups(1);
 		passEncoder.end();
 
-		commandEncoder.copyBufferToBuffer(
-			this.writeBuffer /* source buffer */,
-			0 /* source offset */,
-			this.readBuffer /* destination buffer */,
-			0 /* destination offset */,
-			this.bufferSizeInByte /* size */
-		);
+		// commandEncoder.copyBufferToBuffer(
+		// 	this.writeBuffer /* source buffer */,
+		// 	0 /* source offset */,
+		// 	this.readBuffer /* destination buffer */,
+		// 	0 /* destination offset */,
+		// 	this.bufferSizeInByte /* size */
+		// );
 	}
 
 	writeToGPU() {
@@ -146,6 +146,7 @@ export class Grid {
 
 
 		let debugMatrix = [];
+		let debugMass = 0;
 		for (let x = 0; x < this.resolution[0]; ++x) {
 			const debugRow = []
 			for (let y = 0; y < this.resolution[1]; ++y) {
@@ -157,18 +158,16 @@ export class Grid {
 
 				offset += 4; // padding
 
-				// debugRow.push([
-				// 	this.cells[i].midpoint[0],
-				// 	this.cells[i].midpoint[1],
-				// 	this.cells[i].mass
-				// ].join(","));
+				debugMass += this.cells[i].mass;
 				debugRow.push(this.cells[i].mass)
+
 			}
 			debugMatrix.push(debugRow);
 		}
 
 		console.clear();
 		console.table(debugMatrix);
+		console.log(debugMass)
 
 		this.readBuffer.unmap();
 	}

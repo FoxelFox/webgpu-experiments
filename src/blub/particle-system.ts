@@ -222,7 +222,7 @@ export class ParticleSystem {
 		++this.t;
 		device.queue.submit([commandEncoder.finish()]);
 		// await device.queue.onSubmittedWorkDone();
-		await this.grid.readFromGPU();
+		// await this.grid.readFromGPU();
 	}
 
 	get activeParticleBuffer(): GPUBuffer {
@@ -269,40 +269,43 @@ export class ParticleSystem {
 			this.particleBuffers[i].unmap();
 		}
 
-		for (let i = 0; i < 2; ++i) {
-			this.particleBindGroups[i] = device.createBindGroup({
-				layout: this.computePipeline.getBindGroupLayout(0),
-				entries: [
-					{
-						binding: 0,
-						resource: {
-							buffer: this.particleBuffers[i],
-							offset: 0,
-							size: initialParticleData.byteLength,
-						},
-					},
-					{
-						binding: 1,
-						resource: {
-							buffer: this.particleBuffers[(i + 1) % 2],
-							offset: 0,
-							size: initialParticleData.byteLength,
-						},
-					},
-					{
-						binding: 2,
-						resource: {
-							buffer: this.uniform.buffer
-						}
-					}
-				],
-			});
-		}
-
 		if (!this.grid) {
 			this.grid = new Grid();
 		}
 
 		this.grid.init(this.particleBuffers);
+
+		for (let i = 0; i < 2; ++i) {
+			this.particleBindGroups[i] = device.createBindGroup({
+				layout: this.computePipeline.getBindGroupLayout(0),
+				entries: [{
+					binding: 0,
+					resource: {
+						buffer: this.particleBuffers[i],
+						offset: 0,
+						size: initialParticleData.byteLength,
+					},
+				}, {
+					binding: 1,
+					resource: {
+						buffer: this.particleBuffers[(i + 1) % 2],
+						offset: 0,
+						size: initialParticleData.byteLength,
+					},
+				}, {
+					binding: 2,
+					resource: {
+						buffer: this.uniform.buffer
+					}
+				}, {
+					binding: 3,
+					resource: {
+						buffer: this.grid.writeBuffer
+					}
+				}],
+			});
+		}
+
+
 	}
 }

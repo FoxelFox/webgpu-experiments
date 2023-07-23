@@ -15,19 +15,36 @@ async function main() {
 	particleSystem.init();
 
 	particleSystem.setDifficulty(8);
-	await particleSystem.update()
+	await particleSystem.update();
+
+
+	let difficulty = 1;
+	let before = Date.now();
+	let fps = 60;
+	let score = 0;
 
 	const loop = async () => {
 
 		await device.queue.onSubmittedWorkDone();
+		await particleSystem.update();
 
-		// loop
-		setTimeout(async () => {
-			await particleSystem.update();
+		const now = Date.now();
+		const time = now - before;
+		before = now;
 
-			requestAnimationFrame(loop);
-		}, 1000);
+		fps = 1000 / time;
 
+		if (fps > 60) {
+			particleSystem.setDifficulty(++difficulty);
+			score = 0;
+		}
+
+		score = Math.max(Math.pow((difficulty / 100) * fps, 2), score);
+
+		document.getElementById("info").innerHTML = `Your GPU can handle ${difficulty * 1024} Particles when targeting 60 FPS`
+		document.getElementById("score").innerHTML = `Benchmark Score ${score.toFixed(0)}`
+
+		requestAnimationFrame(loop);
 
 	}
 
