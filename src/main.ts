@@ -10,21 +10,24 @@ async function main() {
 
 	await init();
 
-	const grid = new Grid();
-	const blub = new ParticleSystem();
 
-	blub.init();
+	const particleSystem = new ParticleSystem();
+	particleSystem.init();
 
-	grid.run();
-	await grid.readFromGPU();
+	particleSystem.setDifficulty(8);
+	await particleSystem.update()
 
 	const loop = async () => {
 
 		await device.queue.onSubmittedWorkDone();
 
 		// loop
+		setTimeout(async () => {
+			await particleSystem.update();
 
-		requestAnimationFrame(loop);
+			requestAnimationFrame(loop);
+		}, 1000);
+
 
 	}
 

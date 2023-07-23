@@ -4,7 +4,7 @@ import gridShader from "./grid.wgsl";
 export class Grid {
 
 	pipeline: GPUComputePipeline;
-	bindGroup: GPUBindGroup;
+	bindGroups: GPUBindGroup[];
 	writeBuffer: GPUBuffer;
 	readBuffer: GPUBuffer;
 
@@ -17,6 +17,10 @@ export class Grid {
 
 	constructor() {
 
+
+
+
+
 		this.pipeline = device.createComputePipeline({
 			layout: 'auto',
 			compute: {
@@ -26,11 +30,15 @@ export class Grid {
 				entryPoint: 'main',
 			}
 		});
-
-		this.init();
 	}
 
-	init() {
+	init(particles: GPUBuffer[]) {
+
+		if (this.writeBuffer) {
+			this.writeBuffer.destroy();
+			this.readBuffer.destroy();
+		}
+
 		this.resolution = [8.0, 8.0];
 		this.cells = Array(8 * 8).fill({
 			midpoint: [0, 0],
@@ -50,25 +58,31 @@ export class Grid {
 
 		this.writeToGPU();
 
-		this.bindGroup = device.createBindGroup({
-			layout: this.pipeline.getBindGroupLayout(0),
-			entries: [{
-				binding: 0,
-				resource: {
-					buffer: this.writeBuffer
-				}
+		this.bindGroups = new Array(2);
 
-			}]
-		})
+		for(let i = 0; i < 2; ++i) {
+			this.bindGroups[i] = device.createBindGroup({
+				layout: this.pipeline.getBindGroupLayout(0),
+				entries: [{
+					binding: 0,
+					resource: {
+						buffer: this.writeBuffer
+					}
+				}, {
+					binding: 1,
+					resource: {
+						buffer: particles[i]
+					}
+				}]
+			})
+		}
 	}
 
-	run() {
-		const commandEncoder = device.createCommandEncoder();
-
+	run(commandEncoder: GPUCommandEncoder, t: number) {
 		const passEncoder = commandEncoder.beginComputePass();
 		passEncoder.setPipeline(this.pipeline);
-		passEncoder.setBindGroup(0, this.bindGroup);
-		passEncoder.dispatchWorkgroups(64);
+		passEncoder.setBindGroup(0, this.bindGroups[t % 2]);
+		passEncoder.dispatchWorkgroups(1);
 		passEncoder.end();
 
 		commandEncoder.copyBufferToBuffer(
@@ -78,10 +92,6 @@ export class Grid {
 			0 /* destination offset */,
 			this.bufferSizeInByte /* size */
 		);
-
-		const gpuCommands = commandEncoder.finish();
-		device.queue.submit([gpuCommands]);
-
 	}
 
 	writeToGPU() {
@@ -147,20 +157,20 @@ export class Grid {
 
 				offset += 4; // padding
 
-				debugRow.push([
-					this.cells[i].midpoint[0],
-					this.cells[i].midpoint[1],
-					this.cells[i].mass
-				].join(","));
+				// debugRow.push([
+				// 	this.cells[i].midpoint[0],
+				// 	this.cells[i].midpoint[1],
+				// 	this.cells[i].mass
+				// ].join(","));
+				debugRow.push(this.cells[i].mass)
 			}
 			debugMatrix.push(debugRow);
 		}
 
-		console.table({
-			resolution: this.resolution
-		})
+		console.clear();
 		console.table(debugMatrix);
-		//console.log(new Float32Array(buffer))
+
+		this.readBuffer.unmap();
 	}
 
 	get bufferSizeInByte(): number {

@@ -5,6 +5,7 @@ import {quad} from "../buffer/primitive";
 import {createUniform, UniformBuffer} from "../buffer/uniform";
 import {mat4, vec4} from "wgpu-matrix";
 import p5 from 'p5';
+import {Grid} from "./grid/grid";
 
 export class ParticleSystem {
 
@@ -19,6 +20,8 @@ export class ParticleSystem {
 	renderUniformBindGroup
 	particleBindGroups: GPUBindGroup[]
 	particleBuffers: GPUBuffer[]
+	grid: Grid
+
 	difficulty: number = 1;
 
 
@@ -174,7 +177,7 @@ export class ParticleSystem {
 				binding: 0,
 				resource: {buffer: this.uniform.buffer}
 			}]
-		})
+		});
 	}
 
 
@@ -195,6 +198,8 @@ export class ParticleSystem {
 				},
 			],
 		};
+
+		this.grid.run(commandEncoder, this.t);
 
 		{
 			const passEncoder = commandEncoder.beginComputePass();
@@ -217,7 +222,7 @@ export class ParticleSystem {
 		++this.t;
 		device.queue.submit([commandEncoder.finish()]);
 		// await device.queue.onSubmittedWorkDone();
-
+		await this.grid.readFromGPU();
 	}
 
 	get activeParticleBuffer(): GPUBuffer {
@@ -293,5 +298,11 @@ export class ParticleSystem {
 				],
 			});
 		}
+
+		if (!this.grid) {
+			this.grid = new Grid();
+		}
+
+		this.grid.init(this.particleBuffers);
 	}
 }
