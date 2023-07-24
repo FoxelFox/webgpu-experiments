@@ -1,5 +1,5 @@
 export async function init() {
-	adapter = await navigator.gpu.requestAdapter();
+	adapter = await navigator.gpu.requestAdapter({powerPreference: "high-performance"});
 	device = await adapter.requestDevice();
 }
 

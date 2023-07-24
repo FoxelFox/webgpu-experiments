@@ -227,7 +227,7 @@ export class ParticleSystem {
 			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 			passEncoder.setPipeline(this.pipeline);
 			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-			passEncoder.setVertexBuffer(0, quad(0.01));
+			passEncoder.setVertexBuffer(0, quad(0.001));
 			passEncoder.setVertexBuffer(1, this.activeParticleBuffer);
 			passEncoder.draw(6, this.numParticles, 0, 0);
 			passEncoder.end();

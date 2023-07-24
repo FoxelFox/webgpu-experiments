@@ -94,10 +94,15 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 //	*/
 
 	// mouse
-//	var dis = distance(myUniform.blub.xy, vPos) + 0.01;
-//	var force = 0.0001 / pow(pow(dis, 2), -1.5);
-//	var vv = normalize( myUniform.blub.xy - vPos) * force;
-//	offset += vv * 2/ dis;
+	var dis = distance(myUniform.blub.xy, vPos) + 0.01;
+	var force = 0.0001 / pow(pow(dis, 2), -1.5);
+	var vv = normalize( myUniform.blub.xy - vPos) * force;
+
+
+	 if (dis < 0.1) {
+		offset -= vv * 500/ dis;
+	}
+
 
 	vForce += offset;
 	vVel += vForce;
