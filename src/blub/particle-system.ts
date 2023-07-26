@@ -53,6 +53,13 @@ export class ParticleSystem {
 		this.uniform.data.blub[1] = normalizedY;
 	}
 
+	onmousedown = () => {
+		this.uniform.data.blub[3] = this.uniform.data.blub[3] ? 0 : 1;
+		console.log(this.uniform.data.blub[3])
+	}
+
+
+
 	// THX ChatGPT
 	calculateInitialVelocity(x: number, y: number, angularVelocity: number, noise: p5): { x: number, y: number } {
 		const noiseScale = 10;
@@ -69,6 +76,7 @@ export class ParticleSystem {
 		const vy = angularVelocity * (r) * Math.sin(theta)
 
 		return {x: vx, y: vy};
+		//return {x: 0, y: 0};
 	}
 
 	// THX ChatGPT
@@ -95,6 +103,7 @@ export class ParticleSystem {
 		this.setCanvasSize();
 		window.addEventListener("resize", this.setCanvasSize);
 		window.addEventListener("mousemove", this.setMousePosition);
+		window.addEventListener("mousedown", this.onmousedown);
 
 		this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 		const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
@@ -227,7 +236,7 @@ export class ParticleSystem {
 			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 			passEncoder.setPipeline(this.pipeline);
 			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-			passEncoder.setVertexBuffer(0, quad(0.005));
+			passEncoder.setVertexBuffer(0, quad(0.0025));
 			passEncoder.setVertexBuffer(1, this.activeParticleBuffer);
 			passEncoder.draw(6, this.numParticles, 0, 0);
 			passEncoder.end();
@@ -250,7 +259,7 @@ export class ParticleSystem {
 		const initialParticleData = new Float32Array(this.numParticles * 6);
 		const noise = new p5();
 		for (let i = 0; i < this.numParticles; ++i) {
-			const p = this.generateRandomParticle(0.5, noise);
+			const p = this.generateRandomParticle(0.7, noise);
 			const v = this.calculateInitialVelocity(p.x, p.y, -0.015, noise);
 
 			initialParticleData[6 * i + 0] = p.x;

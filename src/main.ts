@@ -36,7 +36,7 @@ async function main() {
 
 		fps = 1000 / time;
 
-		if (fps > 60 && difficulty < 1000) {
+		if (fps > 60 && difficulty < 200) {
 			difficulty += difficultyIncrease;
 			particleSystem.setDifficulty(difficulty);
 			score = 0;
@@ -48,7 +48,7 @@ async function main() {
 
 		score = Math.max(Math.pow((difficulty / 100) * fps, 2), score);
 
-		document.getElementById("info").innerHTML = `Your GPU can handle ${difficulty * 1024} Particles when targeting 60 FPS`
+		//document.getElementById("info").innerHTML = `Your GPU can handle ${difficulty * 1024} Particles when targeting 60 FPS`
 		document.getElementById("score").innerHTML = `Benchmark Score ${score.toFixed(0)}`
 
 		requestAnimationFrame(loop);
