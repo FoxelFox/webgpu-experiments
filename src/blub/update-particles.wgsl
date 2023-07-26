@@ -79,7 +79,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 		if (grid.cells[i].mass >= 1) {
 			pos = cell.midpoint.xy / cell.mass;
-			var dis = distance(pos, vPos) + 0.01;
+			var dis = distance(pos, vPos) + 0.001;
 			var force = (cell.mass / myUniform.blub.z) / pow(dis, 2);
 			var vv = (pos - vPos) * force * 0.00000005;
 
@@ -103,30 +103,39 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		offset -= vv * 500/ dis;
 	}
 
+	// Wrap around boundary
+	var box = 1.0;
+	if (vPos.x < -box) {
+		vPos.x += box * 2;
+		vForce = vec2(0);
+		offset = vec2(0);
+		vVel = vec2(0);
+	}
+	if (vPos.x > box) {
+		vPos.x -= box * 2;
+		vForce = vec2(0);
+		offset = vec2(0);
+		vVel = vec2(0);
+	}
+	if (vPos.y < -box) {
+		vPos.y += box * 2;
+		vForce = vec2(0);
+		offset = vec2(0);
+		vVel = vec2(0);
+	}
+	if (vPos.y > box) {
+		vPos.y -= box * 2;
+		vForce = vec2(0);
+		offset = vec2(0);
+		vVel = vec2(0);
+	}
 
 	vForce += offset;
 	vVel += vForce;
 	//vVel = clamp(vVel, vec2(-0.01), vec2(0.01)); // like speed of light limit
 
 
-	// Wrap around boundary
-	var box = 1.0;
-	if (vPos.x < -box) {
-		vForce.x += 0.0001;
-		vVel *=0.99;
-	}
-	if (vPos.x > box) {
-		vForce.x -= 0.0001;
-		vVel *=0.99;
-	}
-	if (vPos.y < -box) {
-		vForce.y += 0.0001;
-		vVel *=0.99;
-	}
-	if (vPos.y > box) {
-		vForce.y -= 0.0001;
-		vVel *=0.99;
-	}
+
 	// Write back
 	vForce *= 0.0;
 	//vVel *= 0.99;

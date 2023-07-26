@@ -14,14 +14,16 @@ async function main() {
 	const particleSystem = new ParticleSystem();
 	particleSystem.init();
 
-	particleSystem.setDifficulty(100);
+	particleSystem.setDifficulty(1);
 	await particleSystem.update();
 
 
 	let difficulty = 1;
+	let difficultyIncrease = 1;
 	let before = Date.now();
 	let fps = 60;
 	let score = 0;
+
 
 	const loop = async () => {
 
@@ -35,9 +37,13 @@ async function main() {
 		fps = 1000 / time;
 
 		if (fps > 60 && difficulty < 1000) {
-			difficulty += 10;
+			difficulty += difficultyIncrease;
 			particleSystem.setDifficulty(difficulty);
 			score = 0;
+
+			if (difficulty == 100) {
+				difficultyIncrease = 10;
+			}
 		}
 
 		score = Math.max(Math.pow((difficulty / 100) * fps, 2), score);
