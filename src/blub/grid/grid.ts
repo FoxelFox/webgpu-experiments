@@ -5,7 +5,7 @@ export class Grid {
 
 	pipeline: GPUComputePipeline;
 	bindGroups: GPUBindGroup[];
-	writeBuffer: GPUBuffer;
+	writeBuffers: GPUBuffer[];
 	readBuffer: GPUBuffer;
 
 	// shader Grid struct
@@ -17,9 +17,7 @@ export class Grid {
 
 	constructor() {
 
-
-
-
+		this.writeBuffers = new Array(2);
 
 		this.pipeline = device.createComputePipeline({
 			layout: 'auto',
@@ -34,8 +32,9 @@ export class Grid {
 
 	init(particles: GPUBuffer[]) {
 
-		if (this.writeBuffer) {
-			this.writeBuffer.destroy();
+		if (this.writeBuffers[0]) {
+			this.writeBuffers[0].destroy();
+			this.writeBuffers[1].destroy();
 			this.readBuffer.destroy();
 		}
 
@@ -46,11 +45,13 @@ export class Grid {
 			mass: 0
 		});
 
-		this.writeBuffer = device.createBuffer({
-			mappedAtCreation: true,
-			size: this.bufferSizeInByte,
-			usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.STORAGE
-		});
+		for (let i = 0; i < this.writeBuffers.length; ++i) {
+			this.writeBuffers[i] = device.createBuffer({
+				mappedAtCreation: true,
+				size: this.bufferSizeInByte,
+				usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.STORAGE
+			});
+		}
 
 		this.readBuffer = device.createBuffer({
 			size: this.bufferSizeInByte,
@@ -67,7 +68,7 @@ export class Grid {
 				entries: [{
 					binding: 0,
 					resource: {
-						buffer: this.writeBuffer
+						buffer: this.writeBuffers[i]
 					}
 				}, {
 					binding: 1,
@@ -96,28 +97,29 @@ export class Grid {
 	}
 
 	writeToGPU() {
-		const buffer = this.writeBuffer.getMappedRange();
-		const view = new DataView(buffer);
+		for (let i = 0; i < this.writeBuffers.length; ++i) {
+			const buffer = this.writeBuffers[i].getMappedRange();
+			const view = new DataView(buffer);
 
-		let offset = 0;
+			let offset = 0;
 
-		view.setFloat32(offset, this.resolution[0], true); offset += 4;
-		view.setFloat32(offset, this.resolution[1], true); offset += 4;
+			view.setFloat32(offset, this.resolution[0], true); offset += 4;
+			view.setFloat32(offset, this.resolution[1], true); offset += 4;
 
-		for (let x = 0; x < this.resolution[0]; ++x) {
-			for (let y = 0; y < this.resolution[1]; ++y) {
-				const i = x + y * this.resolution[1];
-				view.setFloat32(offset, this.cells[i].midpoint[0], true); offset += 4;
-				view.setFloat32(offset, this.cells[i].midpoint[1], true); offset += 4;
+			for (let x = 0; x < this.resolution[0]; ++x) {
+				for (let y = 0; y < this.resolution[1]; ++y) {
+					const i = x + y * this.resolution[1];
+					view.setFloat32(offset, this.cells[i].midpoint[0], true); offset += 4;
+					view.setFloat32(offset, this.cells[i].midpoint[1], true); offset += 4;
 
-				view.setFloat32(offset, this.cells[i].mass, true); offset += 4;
+					view.setFloat32(offset, this.cells[i].mass, true); offset += 4;
 
-				offset += 4; // padding
+					offset += 4; // padding
+				}
 			}
-		}
 
-		//console.log("before", new Float32Array(buffer));
-		this.writeBuffer.unmap();
+			this.writeBuffers[i].unmap();
+		}
 	}
 
 	async readFromGPU() {

@@ -323,7 +323,12 @@ export class ParticleSystem {
 				}, {
 					binding: 3,
 					resource: {
-						buffer: this.grid.writeBuffer
+						buffer: this.grid.writeBuffers[i]
+					}
+				}, {
+					binding: 4,
+					resource: {
+						buffer: this.grid.writeBuffers[(i + 1) % 2]
 					}
 				}],
 			});
