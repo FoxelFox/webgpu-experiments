@@ -1,27 +1,8 @@
+#include "data-structs.wgsl"
+
 struct MyUniform {
     view: mat4x4<f32>,
     blub: vec4<f32>
-}
-
-struct Particle {
-	pos : vec2<f32>,
-	vel: vec2<f32>,
-	force: vec2<f32>
-}
-
-struct Particles {
-	particles : array<Particle>,
-}
-
-// TODO use import feature
-struct Cell {
-	midpoint: vec2<f32>,
-	mass: f32
-}
-
-struct Grid {
-	resolution: vec2<f32>,
-	cells: array <Cell>
 }
 
 @binding(0) @group(0) var<storage, read> particlesA : Particles;
@@ -156,4 +137,14 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     particlesB.particles[index].vel = vVel;
 	particlesB.particles[index].pos = vPos;
 	particlesB.particles[index].force = vForce;
+
+
+//	{
+//		var gridIndex2D = floor((vPos.xy + vec2(1)) * (gridA.resolution / 2));
+//    	var gridIndex = u32(gridIndex2D.x + gridA.resolution.x * gridIndex2D.y);
+//
+//    	atomicAdd(gridB.cells[gridIndex].midpoint, vPos.xy);
+//	}
+
+
 }
