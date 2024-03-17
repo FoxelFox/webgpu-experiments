@@ -1,6 +1,4 @@
 import {device} from "../global";
-import {mat4} from "wgpu-matrix";
-import {ArrayLike} from "wgpu-matrix/dist/1.x/array-like";
 
 export function createUniform(param: {[key: string]: number | object}): GPUBuffer {
 	return
@@ -14,7 +12,7 @@ export class UniformBuffer {
 
 	buffer: GPUBuffer
 
-	constructor(public data: {[key: string]: number | Float32Array | ArrayLike }) {
+	constructor(public data: {[key: string]: number | number[] | Float32Array | Float64Array }) {
 
 		let byteSize = 0;
 

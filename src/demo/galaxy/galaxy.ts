@@ -1,13 +1,13 @@
-import {adapter, device, init} from "../global";
+import {device} from "../../global";
 import drawParticles from "./draw-particles.wgsl";
 import updateParticles from "./update-particles.wgsl";
-import {quad} from "../buffer/primitive";
-import {createUniform, UniformBuffer} from "../buffer/uniform";
+import {quad} from "../../buffer/primitive";
+import {UniformBuffer} from "../../buffer/uniform";
 import {mat4, vec4} from "wgpu-matrix";
 import p5 from 'p5';
 import {Grid} from "./grid/grid";
 
-export class ParticleSystem {
+export class Galaxy {
 
 	canvas: HTMLCanvasElement;
 	context
@@ -90,6 +90,55 @@ export class ParticleSystem {
 		const y = r * Math.sin(theta);
 
 		return {x, y};
+	}
+
+	async start() {
+		this.init();
+
+		this.setDifficulty(1);
+		await this.update();
+
+
+		let difficulty = 1;
+		let difficultyIncrease = 1;
+		let before = Date.now();
+		let fps = 60;
+		let score = 0;
+
+
+		const loop = async () => {
+
+			await device.queue.onSubmittedWorkDone();
+			await this.update();
+
+			const now = Date.now();
+			const time = now - before;
+			before = now;
+
+			fps = 1000 / time;
+
+			if (fps > 60 && difficulty < 200 && this.uniform.data.blub[3] === 0) {
+				difficulty += difficultyIncrease;
+				this.setDifficulty(difficulty);
+				score = 0;
+
+				if (difficulty == 100) {
+					difficultyIncrease = 1;
+				}
+
+			}
+
+			if (this.uniform.data.blub[3] === 0) {
+				score = (score * 24 + Math.pow((difficulty / 100) * fps, 2)) /25;
+			}
+
+			//document.getElementById("info").innerHTML = `Your GPU can handle ${difficulty * 1024} Particles when targeting 60 FPS`
+			document.getElementById("score").innerHTML = `Benchmark Score ${score.toFixed(0)}`
+
+			requestAnimationFrame(loop);
+		}
+
+		await loop();
 	}
 
 	init() {
@@ -337,3 +386,4 @@ export class ParticleSystem {
 
 	}
 }
+

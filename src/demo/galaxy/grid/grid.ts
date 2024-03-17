@@ -1,4 +1,4 @@
-import {device} from "../../global";
+import {device} from "../../../global";
 import gridShader from "./grid.wgsl";
 
 export class Grid {
