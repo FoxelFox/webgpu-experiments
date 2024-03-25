@@ -10,7 +10,7 @@ enum Demo {
 	KeepDistance
 }
 
-const activeDemo: Demo = Demo.Galaxy;
+const activeDemo: Demo = Demo.KeepDistance;
 
 async function main() {
 	await init();
@@ -21,6 +21,7 @@ async function main() {
 			break;
 		case Demo.KeepDistance:
 			await new KeepDistance().start();
+			break;
 	}
 }
 
