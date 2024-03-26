@@ -34,7 +34,6 @@ export class KeepDistance {
         let fps = 60;
         let score = 0;
 
-
         const loop = async () => {
 
             await device.queue.onSubmittedWorkDone();
@@ -61,7 +60,6 @@ export class KeepDistance {
                 score = (score * 24 + Math.pow((difficulty / 100) * fps, 2)) / 25;
             }
 
-            //document.getElementById("info").innerHTML = `Your GPU can handle ${difficulty * 1024} Particles when targeting 60 FPS`
             document.getElementById("score").innerHTML = `Benchmark Score ${score.toFixed(0)}`
 
             requestAnimationFrame(loop);
@@ -84,7 +82,6 @@ export class KeepDistance {
         const vy = angularVelocity * (r) * Math.sin(theta)
 
         return {x: vx, y: vy};
-        //return {x: 0, y: 0};
     }
 
     generateRandomParticle(radius: number, noise: p5): { x: number, y: number } {
@@ -329,10 +326,6 @@ export class KeepDistance {
             ],
         };
 
-        //if (this.t % 120 == 0) {
-        //this.grid.run(commandEncoder, this.t);
-        //}
-
         {
             const passEncoder = commandEncoder.beginComputePass();
             passEncoder.setPipeline(this.computePipeline);
@@ -353,8 +346,6 @@ export class KeepDistance {
 
         ++this.t;
         device.queue.submit([commandEncoder.finish()]);
-        // await device.queue.onSubmittedWorkDone();
-        // await this.grid.readFromGPU();
     }
 
     get activeParticleBuffer(): GPUBuffer {

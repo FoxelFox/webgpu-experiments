@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "bun run wasm-pack && bun run build-js",
-    "build-js": "bun esbuild.mjs",
+    "build-js": "bun esbuild.ts",
     "wasm-pack": "wasm-pack build --release"
   },
   "devDependencies": {
