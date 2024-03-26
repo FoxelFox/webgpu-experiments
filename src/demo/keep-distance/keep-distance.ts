@@ -5,15 +5,19 @@ import p5 from 'p5';
 import {quad} from "../../buffer/primitive";
 import drawParticles from "./draw-particles.wgsl";
 import updateParticles from "./update-particles.wgsl";
+import vertexTextureQuad from "./vertexTextureQuad.wgsl";
+import debug from "./debug.wgsl";
+import distance from "./distance.wgsl";
 
 export class KeepDistance {
 
     canvas: HTMLCanvasElement
     uniform: UniformBuffer
     context: GPUCanvasContext
-    pipeline
+    drawParticlesToDistanceTexturePipeline: GPURenderPipeline
+    debugTexturePipeline: GPURenderPipeline
     renderUniformBindGroup
-    computePipeline
+    computePipeline: GPUComputePipeline
     t = 0
     particleBindGroups: GPUBindGroup[]
     particleBuffers: GPUBuffer[]
@@ -22,6 +26,8 @@ export class KeepDistance {
 
     texture: GPUTexture
     textureView: GPUTextureView
+    textureBindGroupLayout: GPUBindGroupLayout
+    textureBindGroup: GPUBindGroup
 
     async start() {
         this.init();
@@ -155,12 +161,30 @@ export class KeepDistance {
 
         this.textureView = this.texture.createView();
 
-        this.pipeline = device.createRenderPipeline({
+        this.textureBindGroupLayout = device.createBindGroupLayout({
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: {
+                    sampleType: "unfilterable-float"
+                }
+            }]
+        });
+
+        this.textureBindGroup = device.createBindGroup({
+            layout: this.textureBindGroupLayout,
+            entries: [{
+                binding: 0,
+                resource: this.textureView
+            }]
+        })
+
+        this.drawParticlesToDistanceTexturePipeline = device.createRenderPipeline({
             layout: 'auto',
             vertex: {
 
                 module: device.createShaderModule({
-                    code: drawParticles,
+                    code: distance,
                 }),
                 entryPoint: 'vert_main',
                 buffers: [{
@@ -193,12 +217,12 @@ export class KeepDistance {
             },
             fragment: {
                 module: device.createShaderModule({
-                    code: drawParticles,
+                    code: distance,
                 }),
                 entryPoint: 'frag_main',
                 targets: [
                     {
-                        format: presentationFormat,
+                        format: 'bgra8unorm',
                         blend: {
                             color: {
                                 srcFactor: 'src-alpha',
@@ -219,6 +243,31 @@ export class KeepDistance {
             },
         });
 
+        this.debugTexturePipeline = device.createRenderPipeline({
+            layout: device.createPipelineLayout({
+                bindGroupLayouts: [this.textureBindGroupLayout],
+            }),
+            vertex: {
+                module: device.createShaderModule({
+                    code: vertexTextureQuad,
+                }),
+                entryPoint: 'main'
+            },
+            fragment: {
+                module: device.createShaderModule({
+                    code: debug,
+                }),
+                entryPoint: 'main',
+                targets: [{
+                    format: presentationFormat,
+                }]
+            },
+            primitive: {
+                topology: 'triangle-list',
+                cullMode: 'back'
+            }
+        });
+
         this.computePipeline = device.createComputePipeline({
             layout: 'auto',
             compute: {
@@ -233,7 +282,7 @@ export class KeepDistance {
 
 
         this.renderUniformBindGroup = device.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(0),
+            layout: this.drawParticlesToDistanceTexturePipeline.getBindGroupLayout(0),
             entries: [{
                 binding: 0,
                 resource: {buffer: this.uniform.buffer}
@@ -313,8 +362,42 @@ export class KeepDistance {
         this.uniform.data.blub[2] = this.difficulty;
         this.uniform.update();
         const commandEncoder = device.createCommandEncoder();
-        const textureView = this.context.getCurrentTexture().createView();
 
+
+        {
+            const passEncoder = commandEncoder.beginComputePass();
+            passEncoder.setPipeline(this.computePipeline);
+            passEncoder.setBindGroup(0, this.particleBindGroups[this.t % 2]);
+            passEncoder.dispatchWorkgroups(Math.ceil(this.numParticles / 64));
+            passEncoder.end();
+        }
+
+        // draw to distance texture
+        {
+            const writeTextureDescriptor: GPURenderPassDescriptor = {
+                colorAttachments: [
+                    {
+                        view: this.textureView,
+
+                        clearValue: { r: 0.0, g: 0.0, b: 1.0, a: 1.0 },
+                        loadOp: 'clear',
+                        storeOp: 'store',
+                    },
+                ]
+            }
+
+            const passEncoder = commandEncoder.beginRenderPass(writeTextureDescriptor);
+            passEncoder.setPipeline(this.drawParticlesToDistanceTexturePipeline);
+            passEncoder.setBindGroup(0, this.renderUniformBindGroup);
+            passEncoder.setVertexBuffer(0, quad(0.005));
+            passEncoder.setVertexBuffer(1, this.activeParticleBuffer);
+            passEncoder.draw(6, this.numParticles, 0, 0);
+            passEncoder.end();
+        }
+
+
+        // draw to screen
+        const textureView = this.context.getCurrentTexture().createView();
         const renderPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [
                 {
@@ -327,20 +410,10 @@ export class KeepDistance {
         };
 
         {
-            const passEncoder = commandEncoder.beginComputePass();
-            passEncoder.setPipeline(this.computePipeline);
-            passEncoder.setBindGroup(0, this.particleBindGroups[this.t % 2]);
-            passEncoder.dispatchWorkgroups(Math.ceil(this.numParticles / 64));
-            passEncoder.end();
-        }
-
-        {
             const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-            passEncoder.setPipeline(this.pipeline);
-            passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-            passEncoder.setVertexBuffer(0, quad(0.005));
-            passEncoder.setVertexBuffer(1, this.activeParticleBuffer);
-            passEncoder.draw(6, this.numParticles, 0, 0);
+            passEncoder.setPipeline(this.debugTexturePipeline);
+            passEncoder.setBindGroup(0, this.textureBindGroup);
+            passEncoder.draw(6);
             passEncoder.end();
         }
 
