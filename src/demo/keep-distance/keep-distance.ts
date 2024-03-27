@@ -51,7 +51,7 @@ export class KeepDistance {
 
             fps = 1000 / time;
 
-            if (fps > 60 && difficulty < 200 && this.uniform.data.blub[3] === 0) {
+            if (fps > 60 && difficulty < 1 && this.uniform.data.blub[3] === 0) {
                 difficulty += difficultyIncrease;
                 this.setDifficulty(difficulty);
                 score = 0;
@@ -379,7 +379,7 @@ export class KeepDistance {
                     {
                         view: this.textureView,
 
-                        clearValue: { r: 0.0, g: 0.0, b: 1.0, a: 1.0 },
+                        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
                         loadOp: 'clear',
                         storeOp: 'store',
                     },

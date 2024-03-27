@@ -15,6 +15,5 @@ fn main(
 		0
 	);
 
-	result.x = coord.x/512;
 	return result;
 }
