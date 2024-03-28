@@ -1,8 +1,8 @@
 import {device} from "../../global";
 import drawParticles from "./draw-particles.wgsl";
 import updateParticles from "./update-particles.wgsl";
-import {quad} from "../../buffer/primitive";
-import {UniformBuffer} from "../../buffer/uniform";
+import {quad} from "../../data/primitive";
+import {UniformBuffer} from "../../data/uniform";
 import {mat4, vec4} from "wgpu-matrix";
 import p5 from 'p5';
 import {Grid} from "./grid/grid";

@@ -1,10 +1,10 @@
 import {mat4, vec4} from "wgpu-matrix";
-import {UniformBuffer} from "../../buffer/uniform";
+import {UniformBuffer} from "../../data/uniform";
 import {device} from "../../global";
 import p5 from 'p5';
-import {quad} from "../../buffer/primitive";
+import {quad} from "../../data/primitive";
 import drawParticles from "./draw-particles.wgsl";
-import updateParticles from "./update-particles.wgsl";
+import updateParticles from "./physics.wgsl";
 import vertexTextureQuad from "./vertexTextureQuad.wgsl";
 import debug from "./debug.wgsl";
 import distance from "./distance.wgsl";
