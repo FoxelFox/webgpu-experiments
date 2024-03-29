@@ -3,11 +3,11 @@ import {UniformBuffer} from "../../data/uniform";
 import {device} from "../../global";
 import p5 from 'p5';
 import {quad} from "../../data/primitive";
-import drawParticles from "./draw-particles.wgsl";
-import updateParticles from "./physics.wgsl";
 import vertexTextureQuad from "./vertexTextureQuad.wgsl";
 import debug from "./debug.wgsl";
 import distance from "./distance.wgsl";
+import {Physics} from "./physics";
+import {MultipleBuffer} from "../../data/multiple-buffer";
 
 export class KeepDistance {
 
@@ -17,10 +17,8 @@ export class KeepDistance {
     drawParticlesToDistanceTexturePipeline: GPURenderPipeline
     debugTexturePipeline: GPURenderPipeline
     renderUniformBindGroup
-    computePipeline: GPUComputePipeline
     t = 0
-    particleBindGroups: GPUBindGroup[]
-    particleBuffers: GPUBuffer[]
+
     difficulty: number = 1;
     numParticles = 1024*64;
 
@@ -28,6 +26,9 @@ export class KeepDistance {
     textureView: GPUTextureView
     textureBindGroupLayout: GPUBindGroupLayout
     textureBindGroup: GPUBindGroup
+
+    physics: Physics;
+    particles: MultipleBuffer;
 
     async start() {
         this.init();
@@ -133,6 +134,9 @@ export class KeepDistance {
 
     init() {
 
+        this.particles = new MultipleBuffer(2);
+        this.physics = new Physics(this);
+
         this.uniform = new UniformBuffer({
             viewMatrix: mat4.create(),
             blub: vec4.create()
@@ -154,7 +158,7 @@ export class KeepDistance {
         });
 
         this.texture = device.createTexture({
-            size: [128, 128],
+            size: [512, 512],
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
             format: 'bgra8unorm',
         });
@@ -268,18 +272,7 @@ export class KeepDistance {
             }
         });
 
-        this.computePipeline = device.createComputePipeline({
-            layout: 'auto',
-            compute: {
-                module: device.createShaderModule({
-                    code: updateParticles,
-                }),
-                entryPoint: 'main',
-            }
-        });
-
         this.setDifficulty(1);
-
 
         this.renderUniformBindGroup = device.createBindGroup({
             layout: this.drawParticlesToDistanceTexturePipeline.getBindGroupLayout(0),
@@ -309,53 +302,8 @@ export class KeepDistance {
             initialParticleData[6 * i + 5] = 0;
         }
 
-
-        if (this.particleBuffers) {
-            this.particleBuffers[0].destroy();
-            this.particleBuffers[1].destroy();
-        }
-
-        this.particleBuffers = new Array(2);
-        this.particleBindGroups = new Array(2);
-
-
-        for (let i = 0; i < 2; ++i) {
-            this.particleBuffers[i] = device.createBuffer({
-                size: initialParticleData.byteLength,
-                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
-                mappedAtCreation: true,
-            });
-            new Float32Array(this.particleBuffers[i].getMappedRange()).set(
-                initialParticleData
-            );
-            this.particleBuffers[i].unmap();
-        }
-
-        for (let i = 0; i < 2; ++i) {
-            this.particleBindGroups[i] = device.createBindGroup({
-                layout: this.computePipeline.getBindGroupLayout(0),
-                entries: [{
-                    binding: 0,
-                    resource: {
-                        buffer: this.particleBuffers[i],
-                        offset: 0,
-                        size: initialParticleData.byteLength,
-                    },
-                }, {
-                    binding: 1,
-                    resource: {
-                        buffer: this.particleBuffers[(i + 1) % 2],
-                        offset: 0,
-                        size: initialParticleData.byteLength,
-                    },
-                }, {
-                    binding: 2,
-                    resource: {
-                        buffer: this.uniform.buffer
-                    }
-                }],
-            });
-        }
+        this.particles.update(initialParticleData);
+        this.physics.updateBindGroup(this.particles, this.uniform);
     }
 
     update = async () => {
@@ -363,14 +311,7 @@ export class KeepDistance {
         this.uniform.update();
         const commandEncoder = device.createCommandEncoder();
 
-
-        {
-            const passEncoder = commandEncoder.beginComputePass();
-            passEncoder.setPipeline(this.computePipeline);
-            passEncoder.setBindGroup(0, this.particleBindGroups[this.t % 2]);
-            passEncoder.dispatchWorkgroups(Math.ceil(this.numParticles / 64));
-            passEncoder.end();
-        }
+        this.physics.update(commandEncoder);
 
         // draw to distance texture
         {
@@ -422,6 +363,6 @@ export class KeepDistance {
     }
 
     get activeParticleBuffer(): GPUBuffer {
-        return this.particleBuffers[(this.t + 1) % 2];
+        return this.particles.buffers[(this.t + 1) % 2];
     }
 }
