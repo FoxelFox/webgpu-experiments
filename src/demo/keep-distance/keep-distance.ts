@@ -2,32 +2,39 @@ import {mat4, vec4} from "wgpu-matrix";
 import {UniformBuffer} from "../../data/uniform";
 import {device} from "../../global";
 import p5 from 'p5';
-import {quad} from "../../data/primitive";
-import vertexTextureQuad from "./vertexTextureQuad.wgsl";
+import vertexTextureQuad from "./screen-quad.wgsl";
 import debug from "./debug.wgsl";
-import distance from "./distance.wgsl";
 import {Physics} from "./physics";
 import {MultipleBuffer} from "../../data/multiple-buffer";
+import {Distance} from "./distance";
+import {Debug} from "./debug";
+import {DrawParticles} from "./draw-particles";
 
 export class KeepDistance {
 
     canvas: HTMLCanvasElement
     uniform: UniformBuffer
     context: GPUCanvasContext
-    drawParticlesToDistanceTexturePipeline: GPURenderPipeline
+
     debugTexturePipeline: GPURenderPipeline
-    renderUniformBindGroup
+
     t = 0
 
     difficulty: number = 1;
     numParticles = 1024*64;
 
     texture: GPUTexture
-    textureView: GPUTextureView
-    textureBindGroupLayout: GPUBindGroupLayout
-    textureBindGroup: GPUBindGroup
+    //textureView: GPUTextureView
+    //textureBindGroupLayout: GPUBindGroupLayout
+    //textureBindGroup: GPUBindGroup
 
     physics: Physics;
+    distance: Distance;
+    debug: Debug;
+    drawParticles: DrawParticles;
+
+    debugMode: boolean = false;
+
     particles: MultipleBuffer;
 
     async start() {
@@ -88,7 +95,8 @@ export class KeepDistance {
         const vx = angularVelocity * (r) * Math.cos(theta)
         const vy = angularVelocity * (r) * Math.sin(theta)
 
-        return {x: vx, y: vy};
+        //return {x: vx, y: vy};
+        return {x: 0, y: 0};
     }
 
     generateRandomParticle(radius: number, noise: p5): { x: number, y: number } {
@@ -132,21 +140,31 @@ export class KeepDistance {
         console.log(this.uniform.data.blub[3])
     }
 
+    onKeydown = (event: KeyboardEvent) => {
+        if (event.code === "KeyD") {
+            this.debugMode = !this.debugMode
+        }
+    }
+
     init() {
 
-        this.particles = new MultipleBuffer(2);
-        this.physics = new Physics(this);
-
+        // data
         this.uniform = new UniformBuffer({
             viewMatrix: mat4.create(),
             blub: vec4.create()
         });
 
+        this.texture = device.createTexture({
+            size: [1024, 1024],
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+            format: 'rgba32float',
+        });
+
+        this.particles = new MultipleBuffer(2);
+
+        // context
         this.canvas = document.getElementsByTagName("canvas")[0];
         this.setCanvasSize();
-        window.addEventListener("resize", this.setCanvasSize);
-        window.addEventListener("mousemove", this.setMousePosition);
-        window.addEventListener("mousedown", this.onmousedown);
 
         this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
         const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
@@ -157,131 +175,20 @@ export class KeepDistance {
             alphaMode: 'premultiplied',
         });
 
-        this.texture = device.createTexture({
-            size: [512, 512],
-            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-            format: 'bgra8unorm',
-        });
 
-        this.textureView = this.texture.createView();
+        // pipelines
+        this.physics = new Physics(this);
+        this.distance= new Distance(this);
+        this.debug = new Debug(this);
+        this.drawParticles = new DrawParticles(this);
 
-        this.textureBindGroupLayout = device.createBindGroupLayout({
-            entries: [{
-                binding: 0,
-                visibility: GPUShaderStage.FRAGMENT,
-                texture: {
-                    sampleType: "unfilterable-float"
-                }
-            }]
-        });
-
-        this.textureBindGroup = device.createBindGroup({
-            layout: this.textureBindGroupLayout,
-            entries: [{
-                binding: 0,
-                resource: this.textureView
-            }]
-        })
-
-        this.drawParticlesToDistanceTexturePipeline = device.createRenderPipeline({
-            layout: 'auto',
-            vertex: {
-
-                module: device.createShaderModule({
-                    code: distance,
-                }),
-                entryPoint: 'vert_main',
-                buffers: [{
-                    arrayStride: 2 * 4,
-                    attributes: [{
-                        shaderLocation: 0,
-                        format: "float32x2",
-                        offset: 0
-                    }, ]
-                }, {
-                    arrayStride: 6 * 4,
-                    stepMode: 'instance',
-                    attributes: [{
-                        // instance position
-                        shaderLocation: 3,
-                        offset: 0,
-                        format: 'float32x2',
-                    }, {
-                        // instance velocity
-                        shaderLocation: 1,
-                        format: "float32x2",
-                        offset: 2 * 4
-                    }, {
-                        // instance force
-                        shaderLocation: 2,
-                        format: "float32x2",
-                        offset: 4 * 4
-                    }]
-                }]
-            },
-            fragment: {
-                module: device.createShaderModule({
-                    code: distance,
-                }),
-                entryPoint: 'frag_main',
-                targets: [
-                    {
-                        format: 'bgra8unorm',
-                        blend: {
-                            color: {
-                                srcFactor: 'src-alpha',
-                                dstFactor: 'one',
-                                operation: 'add',
-                            },
-                            alpha: {
-                                srcFactor: 'zero',
-                                dstFactor: 'one',
-                                operation: 'add',
-                            },
-                        },
-                    },
-                ],
-            },
-            primitive: {
-                topology: 'triangle-list'
-            },
-        });
-
-        this.debugTexturePipeline = device.createRenderPipeline({
-            layout: device.createPipelineLayout({
-                bindGroupLayouts: [this.textureBindGroupLayout],
-            }),
-            vertex: {
-                module: device.createShaderModule({
-                    code: vertexTextureQuad,
-                }),
-                entryPoint: 'main'
-            },
-            fragment: {
-                module: device.createShaderModule({
-                    code: debug,
-                }),
-                entryPoint: 'main',
-                targets: [{
-                    format: presentationFormat,
-                }]
-            },
-            primitive: {
-                topology: 'triangle-list',
-                cullMode: 'back'
-            }
-        });
-
+        // other stuff
         this.setDifficulty(1);
 
-        this.renderUniformBindGroup = device.createBindGroup({
-            layout: this.drawParticlesToDistanceTexturePipeline.getBindGroupLayout(0),
-            entries: [{
-                binding: 0,
-                resource: {buffer: this.uniform.buffer}
-            }]
-        });
-
+        window.addEventListener("resize", this.setCanvasSize);
+        window.addEventListener("mousemove", this.setMousePosition);
+        window.addEventListener("mousedown", this.onmousedown);
+        window.addEventListener("keydown", this.onKeydown);
     }
 
     setDifficulty(difficulty: number) {
@@ -312,50 +219,12 @@ export class KeepDistance {
         const commandEncoder = device.createCommandEncoder();
 
         this.physics.update(commandEncoder);
+        this.distance.update(commandEncoder);
 
-        // draw to distance texture
-        {
-            const writeTextureDescriptor: GPURenderPassDescriptor = {
-                colorAttachments: [
-                    {
-                        view: this.textureView,
-
-                        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-                        loadOp: 'clear',
-                        storeOp: 'store',
-                    },
-                ]
-            }
-
-            const passEncoder = commandEncoder.beginRenderPass(writeTextureDescriptor);
-            passEncoder.setPipeline(this.drawParticlesToDistanceTexturePipeline);
-            passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-            passEncoder.setVertexBuffer(0, quad(0.005));
-            passEncoder.setVertexBuffer(1, this.activeParticleBuffer);
-            passEncoder.draw(6, this.numParticles, 0, 0);
-            passEncoder.end();
-        }
-
-
-        // draw to screen
-        const textureView = this.context.getCurrentTexture().createView();
-        const renderPassDescriptor: GPURenderPassDescriptor = {
-            colorAttachments: [
-                {
-                    view: textureView,
-                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-                    loadOp: 'clear',
-                    storeOp: 'store',
-                },
-            ],
-        };
-
-        {
-            const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-            passEncoder.setPipeline(this.debugTexturePipeline);
-            passEncoder.setBindGroup(0, this.textureBindGroup);
-            passEncoder.draw(6);
-            passEncoder.end();
+        if (this.debugMode) {
+            this.debug.update(commandEncoder);
+        } else {
+            this.drawParticles.update(commandEncoder);
         }
 
         ++this.t;

@@ -21,7 +21,9 @@ export class Physics {
     }
 
     updateBindGroup(particles: MultipleBuffer, uniform: UniformBuffer) {
+
         this.particleBindGroups = new Array(2);
+
         for (let i = 0; i < particles.buffers.length; ++i) {
             this.particleBindGroups[i] = device.createBindGroup({
                 layout: this.computePipeline.getBindGroupLayout(0),
@@ -44,6 +46,10 @@ export class Physics {
                     resource: {
                         buffer: uniform.buffer
                     }
+                }, {
+                    binding: 3,
+                    resource: this.demo.texture.createView()
+
                 }],
             });
         }
