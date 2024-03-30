@@ -16,7 +16,7 @@ fn main(
 	if (result.a < 0.101) {
 		result = vec4(0);
 	} else {
-		result = vec4(1,0,0,1);
+		result = vec4(result.xy,0,1);
 	}
 
 	return result;

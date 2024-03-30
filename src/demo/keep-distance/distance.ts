@@ -52,7 +52,7 @@ export class Distance {
                 entryPoint: 'frag_main',
                 targets: [
                     {
-                        format: 'rgba32float',
+                        format: 'rgba16float',
                         blend: {
                             color: {
                                 srcFactor: 'one',
@@ -102,7 +102,7 @@ export class Distance {
             const passEncoder = commandEncoder.beginRenderPass(writeTextureDescriptor);
             passEncoder.setPipeline(this.pipeline);
             passEncoder.setBindGroup(0, this.bindGroup);
-            passEncoder.setVertexBuffer(0, quad(0.01));
+            passEncoder.setVertexBuffer(0, quad(0.005));
             passEncoder.setVertexBuffer(1, this.demo.activeParticleBuffer);
             passEncoder.draw(6, this.demo.numParticles, 0, 0);
             passEncoder.end();

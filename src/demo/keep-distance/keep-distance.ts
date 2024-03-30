@@ -157,7 +157,7 @@ export class KeepDistance {
         this.texture = device.createTexture({
             size: [1024, 1024],
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-            format: 'rgba32float',
+            format: 'rgba16float',
         });
 
         this.particles = new MultipleBuffer(2);
@@ -183,7 +183,7 @@ export class KeepDistance {
         this.drawParticles = new DrawParticles(this);
 
         // other stuff
-        this.setDifficulty(1);
+        this.setDifficulty(50);
 
         window.addEventListener("resize", this.setCanvasSize);
         window.addEventListener("mousemove", this.setMousePosition);
@@ -203,8 +203,8 @@ export class KeepDistance {
 
             initialParticleData[6 * i + 0] = p.x;
             initialParticleData[6 * i + 1] = p.y;
-            initialParticleData[6 * i + 2] = v.x + (Math.random() - 0.5) * 0.001;
-            initialParticleData[6 * i + 3] = v.y + (Math.random() - 0.5) * 0.001;
+            initialParticleData[6 * i + 2] = v.x + (Math.random() - 0.5) * 0.0001;
+            initialParticleData[6 * i + 3] = v.y + (Math.random() - 0.5) * 0.0001;
             initialParticleData[6 * i + 4] = 0;
             initialParticleData[6 * i + 5] = 0;
         }

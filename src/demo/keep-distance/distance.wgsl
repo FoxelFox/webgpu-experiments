@@ -31,7 +31,7 @@ fn vert_main(
 
 @fragment
 fn frag_main(in : VertexOutput) -> @location(0) vec4<f32> {
-	var color = vec4(in.quad_pos.xy, 1, 0.1);
+	var color = vec4(in.quad_pos.xy, 0, 0.1);
 
 	return color;
 }
