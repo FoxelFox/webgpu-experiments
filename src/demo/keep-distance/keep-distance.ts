@@ -183,7 +183,7 @@ export class KeepDistance {
         this.drawParticles = new DrawParticles(this);
 
         // other stuff
-        this.setDifficulty(50);
+        this.setDifficulty(18);
 
         window.addEventListener("resize", this.setCanvasSize);
         window.addEventListener("mousemove", this.setMousePosition);

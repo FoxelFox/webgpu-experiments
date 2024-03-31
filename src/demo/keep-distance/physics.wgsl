@@ -60,8 +60,8 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
     // mouse
     var dis = distance(mouse, vPos) + 0.0001;
-    var force = ((0.5 - 0.5 * myUniform.blub.w) / myUniform.blub.z) / pow(dis, 2);
-    var vv = (mouse - vPos) * force *  0.00001;
+    var force = ((0.5 - 0.5 * myUniform.blub.w) / myUniform.blub.z) ;
+    var vv = (mouse - vPos) * force;
 
     if (dis > 0.1) {
         //offset += vv;
@@ -80,24 +80,29 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		0
 	);
 
+
+
 	if (d.a > 0.101) {
 		// there is another particle near
 
-		var dis = distance(d.xy, vPos) + 0.0001;
-		var force = 1 / pow(dis, 2);
-		var vv = (d.xy - vPos) * force *  0.000000001;
+		var pos = (d.xy - vPos) / (d.a * 10 - 1);
+
+		var dis = distance(pos, vPos) + 0.0001;
+		var force = 10 / pow(dis, 2);
+		var vv = (pos - vPos) * force *  0.0000001;
 
 
 		vVel -= vv;
         vForce = vec2(1,0);
 	} else {
         vForce = vec2(0,1);
+        vVel *= 0.75;
 	}
 
 	vVel += offset;
 
     vPos += vVel;
-    vVel *= 0.99;
+    vVel *= 0.95;
     //vPos *= 0.999;
 
     // Write back

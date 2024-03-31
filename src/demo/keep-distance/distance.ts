@@ -56,7 +56,7 @@ export class Distance {
                         blend: {
                             color: {
                                 srcFactor: 'one',
-                                dstFactor: 'zero',
+                                dstFactor: 'one',
                                 operation: 'add',
                             },
                             alpha: {
