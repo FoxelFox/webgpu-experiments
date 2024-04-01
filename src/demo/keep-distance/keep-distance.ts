@@ -74,7 +74,7 @@ export class KeepDistance {
                 score = (score * 24 + Math.pow((difficulty / 100) * fps, 2)) / 25;
             }
 
-            document.getElementById("score").innerHTML = `Benchmark Score ${score.toFixed(0)}`
+            document.getElementById("score").innerHTML = `FPS ${fps.toFixed(0)}`
 
             requestAnimationFrame(loop);
         }
@@ -157,7 +157,7 @@ export class KeepDistance {
         this.texture = device.createTexture({
             size: [1024, 1024],
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-            format: 'rgba16float',
+            format: 'rgba32float',
         });
 
         this.particles = new MultipleBuffer(2);
@@ -183,7 +183,8 @@ export class KeepDistance {
         this.drawParticles = new DrawParticles(this);
 
         // other stuff
-        this.setDifficulty(18);
+        this.setDifficulty(4095);
+        //this.setDifficulty(1024);
 
         window.addEventListener("resize", this.setCanvasSize);
         window.addEventListener("mousemove", this.setMousePosition);
@@ -198,7 +199,7 @@ export class KeepDistance {
         const initialParticleData = new Float32Array(this.numParticles * 6);
         const noise = new p5();
         for (let i = 0; i < this.numParticles; ++i) {
-            const p = this.generateRandomParticle(0.7, noise);
+            const p = this.generateRandomParticle(0.9, noise);
             const v = this.calculateInitialVelocity(p.x, p.y, -0.015, noise);
 
             initialParticleData[6 * i + 0] = p.x;
