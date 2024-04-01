@@ -199,7 +199,7 @@ export class KeepDistance {
         const initialParticleData = new Float32Array(this.numParticles * 6);
         const noise = new p5();
         for (let i = 0; i < this.numParticles; ++i) {
-            const p = this.generateRandomParticle(0.9, noise);
+            const p = this.generateRandomParticle(1, noise);
             const v = this.calculateInitialVelocity(p.x, p.y, -0.015, noise);
 
             initialParticleData[6 * i + 0] = p.x;

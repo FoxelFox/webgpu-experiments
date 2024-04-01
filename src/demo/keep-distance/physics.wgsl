@@ -63,11 +63,16 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     var force = ((0.5 - 0.5 * myUniform.blub.w) / myUniform.blub.z) ;
     var vv = (mouse - vPos) * force * 1;
 
-    if (dis > 0.1) {
-        //offset += vv * 1.1;
-    } else {
-        offset -= vv  * 100;
+    if (myUniform.blub.w < 0.5) {
+        if (dis > 0.1) {
+            //offset += vv * 1.1;
+        } else {
+
+            //offset -= vv  * 100;
+            vPos -=  normalize(mouse - vPos) * (0.1 - dis);
+        }
     }
+
 
 
     // distance
@@ -87,16 +92,18 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
         var count = (d.a * 10 - 1);
 		var pos = (d.xy - vPos) / count;
 
-		var dis = distance(pos, vPos);
+		var dis = distance(pos, vPos) + 0.00001;
 
 
 
         var force = count / pow(dis, 2);
-        var vv = (pos - vPos) * force *  0.000000002;
+        var vv = (pos - vPos) * force *  0.000000001;
         offset -= vv;
 
 
-
+        //vVel *= 0.95;
+	} else {
+	    vVel *= 0.5;
 	}
 
 
@@ -111,14 +118,15 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 //     }
 
     if (distance(vec2(0),vPos) > 1) {
-        vVel += vec2(0) - vPos * 0.001;
+        vVel += vec2(0) - vPos * 0.0001;
+        //vVel *= 2.0;
     }
 
    // vVel += vec2(0,-0.0001);
 
 
 
-    vVel *= 0.99;
+
 
     // Write back
     particlesB.particles[index].vel = vVel;

@@ -26,7 +26,7 @@ fn vert_main(
     //output.color = vec4(normalize(velocity.xy) * 0.5 + 0.5,length(velocity.xy) * 100 ,2.5 - (1 / pow(myUniform.blub.z, -0.115)));
 
 
-    output.color = vec4(1,0.5,0, 0.1);
+    output.color = vec4(1,0.5,0, 0.05);
 	output.quad_pos = position.xy;
   return output;
 }
