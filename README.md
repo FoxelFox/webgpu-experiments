@@ -2,9 +2,9 @@
 Currently just a playground for me to test some WebGPU stuff and playing around with rust.
 ___
 ### Requirements to Build
-* nodejs, npm
+* bun
 * rust, wasm-pack
 
 ### How to Build
-`npm run build`
+`bun run build`
 

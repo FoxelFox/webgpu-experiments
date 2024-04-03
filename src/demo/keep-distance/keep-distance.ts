@@ -17,6 +17,7 @@ export class KeepDistance {
     uniform: UniformBuffer
     context: GPUCanvasContext
     texture: GPUTexture
+    textureSize = 2048 *2;
     particles: MultipleBuffer
 
     t = 0
@@ -173,11 +174,12 @@ export class KeepDistance {
         // data
         this.uniform = new UniformBuffer({
             viewMatrix: mat4.create(),
-            mouse: vec4.create()
+            mouse: vec4.create(),
+            textureSize: this.textureSize
         });
 
         this.texture = device.createTexture({
-            size: [4096, 4096],
+            size: [this.textureSize, this.textureSize],
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
             format: 'rgba32float',
         });
