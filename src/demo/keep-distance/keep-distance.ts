@@ -2,13 +2,15 @@ import {mat4, vec2, vec3, vec4} from "wgpu-matrix";
 import {UniformBuffer} from "../../data/uniform";
 import {device} from "../../global";
 import p5 from 'p5';
-import vertexTextureQuad from "./screen-quad.wgsl";
-import debug from "./debug.wgsl";
-import {Physics} from "./physics";
+import vertexTextureQuad from "./pipeline/screen-quad.wgsl";
+import debug from "./pipeline/debug.wgsl";
+import {Physics} from "./pipeline/physics";
 import {MultipleBuffer} from "../../data/multiple-buffer";
-import {Distance} from "./distance";
-import {Debug} from "./debug";
-import {DrawParticles} from "./draw-particles";
+import {Distance} from "./pipeline/distance";
+import {Debug} from "./pipeline/debug";
+import {DrawParticles} from "./pipeline/draw-particles";
+import {User} from "./input/user";
+import {Import} from "./input/import";
 
 export class KeepDistance {
 
@@ -21,15 +23,7 @@ export class KeepDistance {
     particles: MultipleBuffer
 
     t = 0
-    zoom = 1
-    movedX = 0
-    movedY = 0
-    mouseDownPositionX = 0
-    mouseDownPositionY = 0
-    mouseDownMovedX = 0
-    mouseDownMovedY = 0
-
-    debugMode: boolean = false
+    user: User
 
     difficulty: number = 1
     numParticles = 1024 * 64
@@ -40,7 +34,7 @@ export class KeepDistance {
     drawParticles: DrawParticles
 
     async start() {
-        this.init();
+        await this.init();
         await this.update();
 
 
@@ -113,63 +107,10 @@ export class KeepDistance {
         return {x, y};
     }
 
-    updateCamera = () => {
-        this.canvas.width = window.innerWidth * devicePixelRatio;
-        this.canvas.height = window.innerHeight * devicePixelRatio;
+    async init() {
 
-        const ar = this.canvas.width / this.canvas.height;
-
-        this.uniform.data.viewMatrix = mat4.ortho(-ar, ar, -1, 1, -1, 1);
-        this.uniform.data.viewMatrix = mat4.scale(this.uniform.data.viewMatrix, vec3.create(this.zoom,this.zoom,1))
-        this.uniform.data.viewMatrix = mat4.translate(this.uniform.data.viewMatrix, vec3.create(this.movedX,this.movedY,1));
-    }
-
-    setMousePosition = (event: MouseEvent) => {
-
-        let mouseX = event.clientX;
-        let mouseY = event.clientY;
-
-        let normalizedX = (mouseX / window.innerWidth) * 2 - 1;
-        let normalizedY = -((mouseY / window.innerHeight) * 2 - 1);
-
-        let aspectRatio = window.innerWidth / window.innerHeight;
-        normalizedX *= aspectRatio;
-
-        if (this.uniform.data.mouse[3]) {
-            console.log(mouseX - this.mouseDownPositionX)
-            // mouse down, move camera
-            this.movedX = this.mouseDownMovedX + (mouseX  - this.mouseDownPositionX) / window.innerWidth * 2 * aspectRatio / this.zoom;
-            this.movedY = this.mouseDownMovedY + (-mouseY + this.mouseDownPositionY) / window.innerHeight * 2  / this.zoom;
-        }
-
-        this.uniform.data.mouse[0] = (normalizedX / this.zoom - this.movedX);
-        this.uniform.data.mouse[1] = (normalizedY / this.zoom - this.movedY);
-
-    }
-
-    onmousedown = (event: MouseEvent) => {
-        this.mouseDownPositionX = event.clientX;
-        this.mouseDownPositionY = event.clientY;
-        this.mouseDownMovedX = this.movedX;
-        this.mouseDownMovedY = this.movedY;
-        this.uniform.data.mouse[3] = this.uniform.data.mouse[3] ? 0 : 1;
-    }
-
-    onmouseup = () => {
-        this.uniform.data.mouse[3] = this.uniform.data.mouse[3] ? 0 : 1;
-    }
-
-    onKeydown = (event: KeyboardEvent) => {
-        if (event.code === "KeyD") {
-            this.debugMode = !this.debugMode
-        }
-    }
-
-    onWheel = (event: WheelEvent) => {
-        this.zoom *= 1 - event.deltaY * 0.001;
-    }
-
-    init() {
+        const importer = new Import();
+        await importer.start();
 
         // data
         this.uniform = new UniformBuffer({
@@ -185,10 +126,11 @@ export class KeepDistance {
         });
 
         this.particles = new MultipleBuffer(2);
+        this.user = new User(this);
 
         // context
         this.canvas = document.getElementsByTagName("canvas")[0];
-        this.updateCamera();
+        this.user.updateCamera();
 
         this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
         const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
@@ -208,14 +150,6 @@ export class KeepDistance {
 
         // other stuff
         this.setDifficulty(4095);
-        //this.setDifficulty(1024);
-
-        window.addEventListener("resize", this.updateCamera);
-        window.addEventListener("mousemove", this.setMousePosition);
-        window.addEventListener("mousedown", this.onmousedown);
-        window.addEventListener("mouseup", this.onmouseup);
-        window.addEventListener("keydown", this.onKeydown);
-        window.addEventListener("wheel", this.onWheel);
     }
 
     setDifficulty(difficulty: number) {
@@ -241,7 +175,7 @@ export class KeepDistance {
     }
 
     update = async () => {
-        this.updateCamera();
+        this.user.updateCamera();
         this.uniform.data.mouse[2] = this.difficulty;
         this.uniform.update();
         const commandEncoder = device.createCommandEncoder();
@@ -249,7 +183,7 @@ export class KeepDistance {
         this.physics.update(commandEncoder);
         this.distance.update(commandEncoder);
 
-        if (this.debugMode) {
+        if (this.user.debugMode) {
             this.debug.update(commandEncoder);
         } else {
             this.drawParticles.update(commandEncoder);

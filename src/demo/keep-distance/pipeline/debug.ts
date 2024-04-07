@@ -1,5 +1,5 @@
-import {KeepDistance} from "./keep-distance";
-import {device} from "../../global";
+import {KeepDistance} from "../keep-distance";
+import {device} from "../../../global";
 import screenQuad from "./screen-quad.wgsl";
 import debug from "./debug.wgsl";
 

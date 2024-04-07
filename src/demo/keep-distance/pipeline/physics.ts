@@ -1,8 +1,8 @@
-import {device} from "../../global";
+import {device} from "../../../global";
 import shader from "./physics.wgsl";
-import {MultipleBuffer} from "../../data/multiple-buffer";
-import {KeepDistance} from "./keep-distance";
-import {UniformBuffer} from "../../data/uniform";
+import {MultipleBuffer} from "../../../data/multiple-buffer";
+import {KeepDistance} from "../keep-distance";
+import {UniformBuffer} from "../../../data/uniform";
 
 export class Physics {
 	particleBindGroups: GPUBindGroup[]

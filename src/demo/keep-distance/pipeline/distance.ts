@@ -1,9 +1,9 @@
-import {device} from "../../global";
-import shader from "./draw-particles.wgsl";
-import {quad} from "../../data/primitive";
-import {KeepDistance} from "./keep-distance";
+import {device} from "../../../global";
+import distance from "./distance.wgsl";
+import {quad} from "../../../data/primitive";
+import {KeepDistance} from "../keep-distance";
 
-export class DrawParticles {
+export class Distance {
 
     pipeline: GPURenderPipeline
     bindGroup
@@ -14,7 +14,7 @@ export class DrawParticles {
             vertex: {
 
                 module: device.createShaderModule({
-                    code: shader,
+                    code: distance,
                 }),
                 entryPoint: 'vert_main',
                 buffers: [{
@@ -47,20 +47,20 @@ export class DrawParticles {
             },
             fragment: {
                 module: device.createShaderModule({
-                    code: shader,
+                    code: distance,
                 }),
                 entryPoint: 'frag_main',
                 targets: [
                     {
-                        format: 'bgra8unorm',
+                        format: 'rgba32float',
                         blend: {
                             color: {
-                                srcFactor: 'src-alpha',
+                                srcFactor: 'one',
                                 dstFactor: 'one',
                                 operation: 'add',
                             },
                             alpha: {
-                                srcFactor: 'zero',
+                                srcFactor: 'one',
                                 dstFactor: 'one',
                                 operation: 'add',
                             },
@@ -84,27 +84,28 @@ export class DrawParticles {
 
     update(commandEncoder: GPUCommandEncoder) {
 
+        let textureView = this.demo.texture.createView();
+        // draw to distance texture
+        {
+            const writeTextureDescriptor: GPURenderPassDescriptor = {
+                colorAttachments: [
+                    {
+                        view: textureView,
 
-        // draw to screen
-        const textureView = this.demo.context.getCurrentTexture().createView();
-        const renderPassDescriptor: GPURenderPassDescriptor = {
-            colorAttachments: [
-                {
-                    view: textureView,
-                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-                    loadOp: 'clear',
-                    storeOp: 'store',
-                },
-            ],
-        };
+                        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
+                        loadOp: 'clear',
+                        storeOp: 'store',
+                    },
+                ]
+            }
 
-        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        passEncoder.setPipeline(this.pipeline);
-        passEncoder.setBindGroup(0, this.bindGroup);
-        passEncoder.setVertexBuffer(0, quad(0.001 / Math.pow(this.demo.zoom, 0.5)));
-        passEncoder.setVertexBuffer(1, this.demo.activeParticleBuffer);
-        passEncoder.draw(6, this.demo.numParticles, 0, 0);
-        passEncoder.end();
+            const passEncoder = commandEncoder.beginRenderPass(writeTextureDescriptor);
+            passEncoder.setPipeline(this.pipeline);
+            passEncoder.setBindGroup(0, this.bindGroup);
+            passEncoder.setVertexBuffer(0, quad(2/this.demo.textureSize));
+            passEncoder.setVertexBuffer(1, this.demo.activeParticleBuffer);
+            passEncoder.draw(6, this.demo.numParticles, 0, 0);
+            passEncoder.end();
+        }
     }
-
 }
