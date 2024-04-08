@@ -12,6 +12,13 @@ import {DrawParticles} from "./pipeline/draw-particles";
 import {User} from "./input/user";
 import {Import} from "./input/import";
 
+
+
+// Only limited by max dispatchWorkgroups in WebGPU
+// If more needed we have to split the dispatch into
+// multipe chunks or calulate more at once
+const MAX_PARTICLES = 4194304 -64;
+
 export class KeepDistance {
 
     canvas: HTMLCanvasElement
@@ -25,8 +32,7 @@ export class KeepDistance {
     t = 0
     user: User
 
-    difficulty: number = 1
-    numParticles = 1024 * 64
+    numParticles = 4194304 -64;
 
     physics: Physics
     distance: Distance
@@ -37,9 +43,6 @@ export class KeepDistance {
         await this.init();
         await this.update();
 
-
-        let difficulty = 1;
-        let difficultyIncrease = 1;
         let before = Date.now();
         let fps = 60;
         let score = 0;
@@ -54,21 +57,6 @@ export class KeepDistance {
             before = now;
 
             fps = 1000 / time;
-
-            if (fps > 60 && difficulty < 1 && this.uniform.data.mouse[3] === 0) {
-                difficulty += difficultyIncrease;
-                this.setDifficulty(difficulty);
-                score = 0;
-
-                if (difficulty == 100) {
-                    difficultyIncrease = 1;
-                }
-
-            }
-
-            if (this.uniform.data.mouse[3] === 0) {
-                score = (score * 24 + Math.pow((difficulty / 100) * fps, 2)) / 25;
-            }
 
             document.getElementById("score").innerHTML = `FPS ${fps.toFixed(0)}`
 
@@ -149,12 +137,10 @@ export class KeepDistance {
         this.drawParticles = new DrawParticles(this);
 
         // other stuff
-        this.setDifficulty(4095);
+        this.createParticleBuffer();
     }
 
-    setDifficulty(difficulty: number) {
-        this.difficulty = difficulty;
-        this.numParticles = 1024 * difficulty;
+    createParticleBuffer() {
 
         const initialParticleData = new Float32Array(this.numParticles * 6);
         const noise = new p5();
@@ -176,7 +162,6 @@ export class KeepDistance {
 
     update = async () => {
         this.user.updateCamera();
-        this.uniform.data.mouse[2] = this.difficulty;
         this.uniform.update();
         const commandEncoder = device.createCommandEncoder();
 

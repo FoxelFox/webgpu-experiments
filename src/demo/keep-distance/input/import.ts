@@ -12,7 +12,9 @@ export class Import {
     }
 
     async start() {
-        await this.streamCSV("/resources/resultrules.csv")
+        // const res = await fetch("/resources/items.json");
+        // this.map = await res.json();
+        await this.streamCSV("/resources/resultrules.csv");
     }
 
     private async streamCSV(url: string) {

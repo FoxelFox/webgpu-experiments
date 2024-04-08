@@ -42,8 +42,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	// mouse
 	var dis = distance(mouse, vPos);
-	var force = ((0.5 - 0.5 * myUniform.blub.w) / myUniform.blub.z) ;
-	var vv = (mouse - vPos) * force * 1;
+	var vv = (mouse - vPos);
 
 	if (dis > 0.025) {
 		//offset += vv * 1.1;
