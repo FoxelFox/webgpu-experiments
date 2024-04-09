@@ -14,6 +14,7 @@
     "wasm-pack": "wasm-pack build --release"
   },
   "devDependencies": {
+    "@types/bun": "^1.0.12",
     "esbuild-plugin-wasm-pack": "^1.1.0"
   }
 }
