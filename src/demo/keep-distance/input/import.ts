@@ -1,3 +1,5 @@
+import {vec3} from "wgpu-matrix";
+
 export class Import {
 
     maxEdges = 0;
@@ -132,11 +134,14 @@ export class Import {
         console.log("Max. edges: ", this.maxEdges);
 
         colors.length = base * base * 3;
+        buf.length = base * base * this.maxEdges * 4; // WebGPU wants the exact byte length for a full sized texture
+
+        console.log("buf len1", base * base * this.maxEdges)
 
         this.settings.colors = colors;
         this.settings.maxEdges = this.maxEdges;
         this.settings.nodes = Object.keys(this.map).length;
-        this.settings.data = buffer;
+        this.settings.data = buf;
         this.settings.Size = base;
         this.settings.items = filteredItems;
     }
@@ -190,11 +195,10 @@ export class Import {
 
 
     private fixDarkColors(color: number[]) {
-        // TODO
-        // const c = vec3.fromValues(color[0], color[1], color[2]);
-        // if (vec3.length(c) < 128.0) {
-        //     return [96, 96, 96];
-        // }
+        const c = vec3.fromValues(color[0], color[1], color[2]);
+        if (vec3.length(c) < 128.0) {
+            return [96, 96, 96];
+        }
         return  color;
     }
 }

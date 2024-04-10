@@ -50,6 +50,10 @@ export class Physics {
 					binding: 3,
 					resource: this.demo.texture.createView()
 
+				}, {
+					binding: 4,
+					resource: this.demo.edges.createView()
+
 				}],
 			});
 		}

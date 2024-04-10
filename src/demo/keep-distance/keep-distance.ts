@@ -26,7 +26,8 @@ export class KeepDistance {
     uniform: UniformBuffer
     context: GPUCanvasContext
     texture: GPUTexture
-    textureSize = 2048 *2;
+    edges: GPUTexture
+    textureSize = 2048 /4;
     particles: MultipleBuffer
 
     t = 0
@@ -56,9 +57,17 @@ export class KeepDistance {
             const time = now - before;
             before = now;
 
-            fps = 1000 / time;
+            // filter fps spikes
+            if (Math.abs(fps - 1000 / time) > 1) {
+                fps = (fps + (fps < 1000 / time ? fps +1: fps-1)) /2;
+            } else {
+                fps = (fps * 9 + 1000 / time) /10;
+            }
 
-            document.getElementById("score").innerHTML = `FPS ${fps.toFixed(0)}`
+
+
+
+            document.getElementById("score").innerHTML = `FPS ${Math.round(fps)}`
 
             requestAnimationFrame(loop);
         }
@@ -100,6 +109,8 @@ export class KeepDistance {
         const importer = new Import();
         await importer.start();
 
+        this.numParticles = importer.settings.nodes;
+
         // data
         this.uniform = new UniformBuffer({
             viewMatrix: mat4.create(),
@@ -112,6 +123,22 @@ export class KeepDistance {
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
             format: 'rgba32float',
         });
+
+        this.edges = device.createTexture({
+            size: [importer.settings.Size, importer.settings.Size, importer.settings.maxEdges],
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+            format: "rgba32float",
+            dimension: "3d"
+        });
+
+        device.queue.writeTexture(
+            {texture: this.edges},
+            new Float32Array(importer.settings.data),
+            {
+                bytesPerRow: importer.settings.Size * 4 * 4,
+                rowsPerImage: importer.settings.Size
+            },
+            [importer.settings.Size,importer.settings.Size,importer.settings.maxEdges]);
 
         this.particles = new MultipleBuffer(2);
         this.user = new User(this);

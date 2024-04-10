@@ -36,7 +36,7 @@ fn frag_main(in : VertexOutput) -> @location(0) vec4<f32> {
   var color = in.color;
   //var color = vec4(in.quad_pos * 5, 0,1);
   // Apply a circular particle alpha mask
-  color.a = color.a * max(1.0 - length(in.quad_pos * 1600), 0.0);
+  //color.a = color.a * max(1.0 - length(in.quad_pos * 800), 0.0);
 
 //  if (length(in.quad_pos * 800) > 1) {
 //    color.a = 0;

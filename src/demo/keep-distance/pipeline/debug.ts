@@ -6,27 +6,23 @@ import debug from "./debug.wgsl";
 export class Debug {
 
     pipeline: GPURenderPipeline
-    bindGroupLayout: GPUBindGroupLayout
     bindGroup: GPUBindGroup
 
     constructor(private demo: KeepDistance) {
 
-        let textureView = this.demo.texture.createView();
-        this.bindGroupLayout = device.createBindGroupLayout({
-            entries: [{
-                binding: 0,
-                visibility: GPUShaderStage.FRAGMENT,
-                texture: {
-                    sampleType: "unfilterable-float"
-                }
-            }]
-        });
-
         this.bindGroup = device.createBindGroup({
-            layout: this.bindGroupLayout,
+            layout: device.createBindGroupLayout({
+                entries: [{
+                    binding: 0,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {
+                        sampleType: "unfilterable-float"
+                    }
+                }]
+            }),
             entries: [{
                 binding: 0,
-                resource: textureView
+                resource: this.demo.texture.createView()
             }]
         })
 
