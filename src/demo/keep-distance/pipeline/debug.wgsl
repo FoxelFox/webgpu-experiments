@@ -1,4 +1,5 @@
 @group(0) @binding(0) var gBufferDistance: texture_2d<f32>;
+@binding(1) @group(0) var edges: texture_3d<f32>;
 
 @fragment
 fn main(
@@ -18,6 +19,15 @@ fn main(
 	} else {
 		result = vec4(result.xy,0,1);
 	}
+
+    result = textureLoad(
+        edges,
+        vec3i(floor(vec3(coord.xy,0))),
+        0
+    );
+
+    result.x = result.x / 255;
+    result.y = result.y / 255;
 
 	return result;
 }

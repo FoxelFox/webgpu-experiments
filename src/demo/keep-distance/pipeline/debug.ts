@@ -17,12 +17,22 @@ export class Debug {
                     visibility: GPUShaderStage.FRAGMENT,
                     texture: {
                         sampleType: "unfilterable-float"
-                    }
+                    },
+                },{
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {
+                        sampleType: "unfilterable-float",
+                        viewDimension: "3d"
+                    },
                 }]
             }),
             entries: [{
                 binding: 0,
                 resource: this.demo.texture.createView()
+            },{
+                binding: 1,
+                resource: this.demo.edges.createView()
             }]
         })
 

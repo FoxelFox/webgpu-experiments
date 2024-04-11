@@ -53,16 +53,14 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 
 
-            var dis = distance(ePos, vPos);
+            var dis = distance(ePos, vPos) + 0.0001;
             var vv = ePos - vPos;
 
-            if (dis > 0.0025) {
-                offset += vv * 0.000001;
+            if (dis > 0.1) {
+                offset += dis * (vv * 0.00001);
             } else {
 
-               offset -= vv  * 0.001;
-                //offset -=  normalize(vPos - ePos) * (0.0025 - dis) * 0.001;
-               // vVel *= 0.25;
+                offset -= (vv * 0.01);
            }
 
 
@@ -116,7 +114,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	vPos += vVel;
 
-    //vVel *= 0.5;
+    vVel *= 0.95;
 
 	//if (distance(vec2(0),vPos) > 1) {
 	//	vVel += vec2(0) - vPos * 0.001;
