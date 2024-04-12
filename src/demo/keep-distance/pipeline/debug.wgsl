@@ -8,11 +8,25 @@ fn main(
 	var result : vec4f;
 
 
+
+    result = textureLoad(
+        edges,
+        vec3i(floor(vec3(0,coord.xy))),
+        0
+    );
+
+    result.x = result.x / 256;
+    result.y = result.y / 256;
+
+
 	result = textureLoad(
 		gBufferDistance,
 		vec2i(floor(coord.xy)),
 		0
 	);
+
+
+
 
 	if (result.a < 0.101) {
 		result = vec4(0);
@@ -20,14 +34,7 @@ fn main(
 		result = vec4(result.xy,0,1);
 	}
 
-    result = textureLoad(
-        edges,
-        vec3i(floor(vec3(coord.xy,0))),
-        0
-    );
 
-    result.x = result.x / 255;
-    result.y = result.y / 255;
 
 	return result;
 }

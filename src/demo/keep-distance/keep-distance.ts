@@ -125,7 +125,7 @@ export class KeepDistance {
         });
 
         this.edges = device.createTexture({
-            size: [importer.settings.Size, importer.settings.Size, importer.settings.maxEdges],
+            size: [importer.settings.maxEdges, importer.settings.Size, importer.settings.Size],
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
             format: "rgba32float",
             dimension: "3d"
@@ -135,10 +135,10 @@ export class KeepDistance {
             {texture: this.edges},
             new Float32Array(importer.settings.data),
             {
-                bytesPerRow: importer.settings.Size * 4 * 4,
+                bytesPerRow: importer.settings.maxEdges * 4 * 4,
                 rowsPerImage: importer.settings.Size
             },
-            [importer.settings.Size,importer.settings.Size,importer.settings.maxEdges]);
+            [importer.settings.maxEdges, importer.settings.Size,importer.settings.Size]);
 
         this.particles = new MultipleBuffer(2);
         this.user = new User(this);
@@ -172,7 +172,7 @@ export class KeepDistance {
         const initialParticleData = new Float32Array(this.numParticles * 6);
         const noise = new p5();
         for (let i = 0; i < this.numParticles; ++i) {
-            const p = this.generateRandomParticle(0.05, noise);
+            const p = this.generateRandomParticle(1, noise);
             const v = this.calculateInitialVelocity(p.x, p.y, -0.015, noise);
 
             initialParticleData[6 * i + 0] = p.x;

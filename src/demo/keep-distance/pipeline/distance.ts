@@ -102,7 +102,7 @@ export class Distance {
             const passEncoder = commandEncoder.beginRenderPass(writeTextureDescriptor);
             passEncoder.setPipeline(this.pipeline);
             passEncoder.setBindGroup(0, this.bindGroup);
-            passEncoder.setVertexBuffer(0, quad(2/this.demo.textureSize));
+            passEncoder.setVertexBuffer(0, quad(1/this.demo.textureSize));
             passEncoder.setVertexBuffer(1, this.demo.activeParticleBuffer);
             passEncoder.draw(6, this.demo.numParticles, 0, 0);
             passEncoder.end();
