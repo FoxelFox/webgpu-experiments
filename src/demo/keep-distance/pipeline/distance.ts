@@ -84,7 +84,7 @@ export class Distance {
 
     update(commandEncoder: GPUCommandEncoder) {
 
-        let textureView = this.demo.texture.createView();
+        let textureView = this.demo.distanceTexture.createView();
         // draw to distance texture
         {
             const writeTextureDescriptor: GPURenderPassDescriptor = {

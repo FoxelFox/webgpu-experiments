@@ -29,10 +29,10 @@ export class Debug {
             }),
             entries: [{
                 binding: 0,
-                resource: this.demo.texture.createView()
+                resource: this.demo.distanceTexture.createView()
             },{
                 binding: 1,
-                resource: this.demo.edges.createView()
+                resource: this.demo.edgeTexture.createView()
             }]
         })
 

@@ -114,10 +114,11 @@ export class Import {
 
             const item = this.items[this.indexToId[i]];
             if (item) {
+				item.color.push(255);
                 colors.push(...this.fixDarkColors(item.color));
             } else {
                 // not in items.json use default color
-                colors.push(...[255,255,255]);
+                colors.push(...[255,255,255, 255]);
             }
 
 
@@ -133,8 +134,9 @@ export class Import {
         console.log("Size: ", base);
         console.log("Max. edges: ", this.maxEdges);
 
-        colors.length = base * base * 3;
-        buf.length = base * base * this.maxEdges * 4; // WebGPU wants the exact byte length for a full sized texture
+		// WebGPU wants the exact byte length for a full sized texture
+        colors.length = base * base * 4;
+        buf.length = base * base * this.maxEdges * 4; 
 
         console.log("buf len1", base * base * this.maxEdges)
 
@@ -197,7 +199,7 @@ export class Import {
     private fixDarkColors(color: number[]) {
         const c = vec3.fromValues(color[0], color[1], color[2]);
         if (vec3.length(c) < 128.0) {
-            return [96, 96, 96];
+            return [96, 96, 96, 255];
         }
         return  color;
     }

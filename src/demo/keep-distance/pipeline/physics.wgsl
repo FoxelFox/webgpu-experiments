@@ -74,12 +74,12 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	var dis = distance(mouse, vPos);
 	var vv = (mouse - vPos);
 
-	if (dis > 0.05) {
+	if (dis > 0.025) {
 		//offset += vv * 1.1;
 	} else {
 
 		//offset -= vv  * 100;
-		vPos -=  normalize(mouse - vPos) * (0.05 - dis);
+		vPos -=  normalize(mouse - vPos) * (0.025 - dis);
 	}
 
 	// distance

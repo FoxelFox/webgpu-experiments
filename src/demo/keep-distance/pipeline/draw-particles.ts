@@ -78,7 +78,11 @@ export class DrawParticles {
             entries: [{
                 binding: 0,
                 resource: {buffer: this.demo.uniform.buffer}
-            }]
+            }, {
+				binding: 1,
+				resource: this.demo.colorTexture.createView()
+				
+			}]
         });
     }
 

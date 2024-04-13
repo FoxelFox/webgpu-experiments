@@ -48,11 +48,11 @@ export class Physics {
 					}
 				}, {
 					binding: 3,
-					resource: this.demo.texture.createView()
+					resource: this.demo.distanceTexture.createView()
 
 				}, {
 					binding: 4,
-					resource: this.demo.edges.createView()
+					resource: this.demo.edgeTexture.createView()
 
 				}],
 			});
