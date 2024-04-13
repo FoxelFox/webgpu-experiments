@@ -116,7 +116,10 @@ export class KeepDistance {
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create(),
 			mouse: vec4.create(),
-			textureSize: this.textureSize
+			textureSize: this.textureSize,
+			edgeTextureSize: importer.settings.Size,
+			maxEdges: importer.settings.maxEdges
+			
 		});
 
 		this.distanceTexture = device.createTexture({

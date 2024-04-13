@@ -22,7 +22,9 @@ struct Grid {
 struct MyUniform {
 	view: mat4x4<f32>,
 	blub: vec4<f32>,
-	textureSize: f32
+	textureSize: f32,
+	edgesTextureSize: f32,
+	maxEdges: f32
 }
 
 @binding(0) @group(0) var<storage, read> particlesA : Particles;
@@ -42,25 +44,23 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	var offset: vec2<f32> = vec2(0);
 
 	// edges
-	var eX = i32(index % 256);
-	var eY = i32(index / 256);
+	var eX = i32(index % u32(myUniform.edgesTextureSize));
+	var eY = i32(index / u32(myUniform.edgesTextureSize));
 
 
-	for (var i = 0i; i < 32; i++) {
+	for (var i = 0i; i < i32(myUniform.edgesTextureSize); i++) {
         var edge = textureLoad(edges, vec3i(i, eX, eY), 0);
         if (edge.z > 0.1) {
 
-            var ePos = particlesA.particles[i32(edge.y * 256 + edge.x)].pos;
+            var ePos = particlesA.particles[i32(i32(edge.y) * i32(myUniform.edgesTextureSize) + i32(edge.x))].pos;
 
+            var dis = distance(ePos, vPos);
+            var force = 1 / pow(dis, 2);
+            var vv = normalize(ePos - vPos) * dis * 0.0001;
 
-
-            var dis = distance(ePos, vPos) + 0.01;
-            var force = 1 / pow(dis, 1.1);
-            var vv = ePos - vPos;
-
-            //if (dis > 0.05) {
-              vPos += vv * 0.0001;
-            //} else {
+            if (dis > 0.01) {
+              vPos += vv;
+            }
 
               // vPos -= vv * 0.001;
                //vVel *= 0.98;
@@ -96,11 +96,11 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	if (d.a > 0.101) {
 		// there is another particle near
-		var count = (d.a * 10 -1);
+		var count = (d.a * 10 - 1);
 		var pos = (d.xy - vPos) / count;
 		var dis = distance(pos, vPos) + 0.0001;
-		var force = 1 / pow(dis, 1.1);
-		var vv = normalize(pos - vPos) * 0.0000001 * force;
+		var force = 1 / pow(dis, 2);
+		var vv = normalize(pos - vPos) * 0.000001 * force;
 		//offset -= vv;
 		//vVel *= 0.5;
 	} else {
@@ -120,14 +120,9 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	//	vVel += vec2(0) - vPos * 0.001;
 	//}
 
-
-	// Debug
-	var firstEdge = textureLoad(edges, vec3i(0, eX, eY), 0);
-	var firstPos = particlesA.particles[i32(firstEdge.y * 256 + firstEdge.x)].pos;
-
 	// Write back
 	particlesB.particles[index].vel = vVel;
 	particlesB.particles[index].pos = vPos;
-	particlesB.particles[index].force = firstEdge.xy /256 ;
+	particlesB.particles[index].force = vForce;
 
 }
