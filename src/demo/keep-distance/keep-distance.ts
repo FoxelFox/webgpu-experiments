@@ -28,6 +28,7 @@ export class KeepDistance {
 	distanceTexture: GPUTexture
 	edgeTexture: GPUTexture
 	colorTexture: GPUTexture
+	pickingTexture: GPUTexture
 	textureSize = 2048 / 4;
 	particles: MultipleBuffer
 
@@ -107,6 +108,10 @@ export class KeepDistance {
 
 	async init() {
 
+		
+		this.canvas = document.getElementsByTagName("canvas")[0];
+		console.log("canvas",this.canvas.width)
+
 		const importer = new Import();
 		await importer.start();
 
@@ -127,6 +132,12 @@ export class KeepDistance {
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 			format: 'rgba32float',
 		});
+
+		this.pickingTexture = device.createTexture({
+			size: [this.canvas.width, this.canvas.height],
+			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+			format: 'rgba32float',
+		})
 
 		this.edgeTexture = device.createTexture({
 			size: [importer.settings.maxEdges, importer.settings.Size, importer.settings.Size],
@@ -162,7 +173,6 @@ export class KeepDistance {
 		this.user = new User(this);
 
 		// context
-		this.canvas = document.getElementsByTagName("canvas")[0];
 		this.user.updateCamera();
 
 		this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
@@ -205,9 +215,24 @@ export class KeepDistance {
 		this.physics.updateBindGroup(this.particles, this.uniform);
 	}
 
+	resizeTextures() {
+		if (this.pickingTexture.width !== this.canvas.width || this.pickingTexture.height !== this.canvas.height) {
+			// TODO
+			this.pickingTexture.destroy();
+			this.pickingTexture = device.createTexture({
+				size: [this.canvas.width, this.canvas.height],
+				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+				format: 'rgba32float',
+			});
+		}
+	}
+
 	update = async () => {
 		this.user.updateCamera();
 		this.uniform.update();
+		this.resizeTextures();
+
+
 		const commandEncoder = device.createCommandEncoder();
 
 		this.physics.update(commandEncoder);

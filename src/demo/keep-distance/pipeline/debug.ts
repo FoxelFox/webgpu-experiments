@@ -25,6 +25,12 @@ export class Debug {
                         sampleType: "unfilterable-float",
                         viewDimension: "3d"
                     },
+                }, {
+                    binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {
+                        sampleType: "unfilterable-float"
+                    },
                 }]
             }),
             entries: [{
@@ -33,6 +39,9 @@ export class Debug {
             },{
                 binding: 1,
                 resource: this.demo.edgeTexture.createView()
+            }, {
+                binding: 2,
+                resource: this.demo.pickingTexture.createView()
             }]
         })
 
@@ -61,6 +70,7 @@ export class Debug {
     }
 
     update(commandEncoder: GPUCommandEncoder) {
+
         // draw to screen
         const passDescriptor: GPURenderPassDescriptor =  {
             colorAttachments: [

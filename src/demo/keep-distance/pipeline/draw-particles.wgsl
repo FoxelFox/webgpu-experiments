@@ -2,7 +2,8 @@
 struct VertexOutput {
   @builtin(position) position: vec4<f32>,
   @location(0) color: vec4<f32>,
-  @location(1) quad_pos: vec2<f32>, // -1..+1
+  @location(1) @interpolate(flat) id: vec4<u32>
+
 }
 
 struct MyUniform {
@@ -33,22 +34,21 @@ fn vert_main(
 	);
 
     output.color = color;
-    output.quad_pos = position.xy;
+    //output.id = vec4(instanceIdx);
     return output;
 }
 
-@fragment
-fn frag_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    var color = in.color;
-  //var color = vec4(in.quad_pos * 5, 0,1);
-  // Apply a circular particle alpha mask
-  //color.a = color.a * max(1.0 - length(in.quad_pos * 800), 0.0);
+struct FragmentOutput {
+	@location(0) color: vec4<f32>,
+	@location(1) id: vec4<f32>
+}
 
-//  if (length(in.quad_pos * 800) > 1) {
-//    color.a = 0;
-//  } else {
-//    color.a = 1;
-//  }
-    //color.a = color.a * min(1.0 - length(in.quad_pos * 400), 1.0);
-    return color;
+@fragment
+fn frag_main(in: VertexOutput) -> FragmentOutput {
+	var output : FragmentOutput;
+
+    output.color = in.color;
+	output.id.x = f32(in.id.x);
+
+    return output;
 }
