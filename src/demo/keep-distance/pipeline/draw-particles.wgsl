@@ -34,7 +34,7 @@ fn vert_main(
 	);
 
     output.color = color;
-    //output.id = vec4(instanceIdx);
+    output.id.x = instanceIdx;
     return output;
 }
 

@@ -29,8 +29,9 @@ export class KeepDistance {
 	edgeTexture: GPUTexture
 	colorTexture: GPUTexture
 	pickingTexture: GPUTexture
-	textureSize = 2048 / 4;
+	textureSize = 2048 / 4
 	particles: MultipleBuffer
+	canvasWasResized: boolean
 
 	t = 0
 	user: User
@@ -216,14 +217,21 @@ export class KeepDistance {
 	}
 
 	resizeTextures() {
-		if (this.pickingTexture.width !== this.canvas.width || this.pickingTexture.height !== this.canvas.height) {
-			// TODO
+
+		this.canvasWasResized = this.pickingTexture.width !== this.canvas.width || this.pickingTexture.height !== this.canvas.height;
+
+		if (this.canvasWasResized) {
 			this.pickingTexture.destroy();
 			this.pickingTexture = device.createTexture({
 				size: [this.canvas.width, this.canvas.height],
 				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 				format: 'rgba32float',
 			});
+
+
+			// BindGroups that uses this Texture needs to be recreated
+			this.debug.createBindGroup();
+			this.drawParticles.createBindGroup();
 		}
 	}
 

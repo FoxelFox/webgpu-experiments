@@ -10,41 +10,6 @@ export class Debug {
 
     constructor(private demo: KeepDistance) {
 
-        this.bindGroup = device.createBindGroup({
-            layout: device.createBindGroupLayout({
-                entries: [{
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: {
-                        sampleType: "unfilterable-float"
-                    },
-                },{
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: {
-                        sampleType: "unfilterable-float",
-                        viewDimension: "3d"
-                    },
-                }, {
-                    binding: 2,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: {
-                        sampleType: "unfilterable-float"
-                    },
-                }]
-            }),
-            entries: [{
-                binding: 0,
-                resource: this.demo.distanceTexture.createView()
-            },{
-                binding: 1,
-                resource: this.demo.edgeTexture.createView()
-            }, {
-                binding: 2,
-                resource: this.demo.pickingTexture.createView()
-            }]
-        })
-
         this.pipeline = device.createRenderPipeline({
             layout: "auto",
             vertex: {
@@ -67,7 +32,46 @@ export class Debug {
                 cullMode: 'back'
             }
         });
+
+		this.createBindGroup();
     }
+
+	createBindGroup() {
+		this.bindGroup = device.createBindGroup({
+			layout: device.createBindGroupLayout({
+				entries: [{
+					binding: 0,
+					visibility: GPUShaderStage.FRAGMENT,
+					texture: {
+						sampleType: "unfilterable-float"
+					},
+				},{
+					binding: 1,
+					visibility: GPUShaderStage.FRAGMENT,
+					texture: {
+						sampleType: "unfilterable-float",
+						viewDimension: "3d"
+					},
+				}, {
+					binding: 2,
+					visibility: GPUShaderStage.FRAGMENT,
+					texture: {
+						sampleType: "unfilterable-float"
+					},
+				}]
+			}),
+			entries: [{
+				binding: 0,
+				resource: this.demo.distanceTexture.createView()
+			},{
+				binding: 1,
+				resource: this.demo.edgeTexture.createView()
+			}, {
+				binding: 2,
+				resource: this.demo.pickingTexture.createView()
+			}]
+		});
+	}
 
     update(commandEncoder: GPUCommandEncoder) {
 

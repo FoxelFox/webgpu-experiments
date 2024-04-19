@@ -87,10 +87,26 @@ export class DrawParticles {
 				
 			}]
         });
+
+		this.createBindGroup();
     }
 
-    update(commandEncoder: GPUCommandEncoder) {
+	createBindGroup() {
+		this.bindGroup = device.createBindGroup({
+			layout: this.pipeline.getBindGroupLayout(0),
+			entries: [{
+				binding: 0,
+				resource: {buffer: this.demo.uniform.buffer}
+			}, {
+				binding: 1,
+				resource: this.demo.colorTexture.createView()
 
+			}]
+		});
+	}
+
+
+    update(commandEncoder: GPUCommandEncoder) {
 
         // draw to screen
         const textureView = this.demo.context.getCurrentTexture().createView();

@@ -38,7 +38,8 @@ fn main(
 	// 	result = vec4(result.xy,0,1);
 	// }
 
-
+	result.x = result.x;
+	//result.y = 255;
 
 	return result;
 }

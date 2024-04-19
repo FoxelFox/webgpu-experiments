@@ -24,9 +24,9 @@ export class Import {
     }
 
     async start() {
-        const res = await fetch("/resources/items.json");
+        const res = await fetch("./resources/items.json");
         this.items = await res.json();
-        await this.streamCSV("/resources/resultrules.csv");
+        await this.streamCSV("./resources/resultrules.csv");
     }
 
     private async streamCSV(url: string) {
