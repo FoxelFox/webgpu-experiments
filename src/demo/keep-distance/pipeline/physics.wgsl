@@ -48,19 +48,19 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	var eY = i32(index / u32(myUniform.edgesTextureSize));
 
 
+
 	for (var i = 0i; i < i32(myUniform.edgesTextureSize); i++) {
         var edge = textureLoad(edges, vec3i(i, eX, eY), 0);
         if (edge.z > 0.1) {
 
             var ePos = particlesA.particles[i32(i32(edge.y) * i32(myUniform.edgesTextureSize) + i32(edge.x))].pos;
 
-            var dis = distance(ePos, vPos);
-            var force = 1 / pow(dis, 2);
-            var vv = normalize(ePos - vPos) * dis * 0.0001;
+            var dis = distance(ePos, vPos) + 0.001;
+            var vv = (ePos - vPos) * 0.001 * edge.z * dis;
 
-            if (dis > 0.01) {
-              vPos += vv;
-            }
+            //if (dis > 0.1) {
+              vVel += vv;
+            //}
 
               // vPos -= vv * 0.001;
                //vVel *= 0.98;
@@ -78,8 +78,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		//offset += vv * 1.1;
 	} else {
 
-		//offset -= vv  * 100;
-		vPos -=  normalize(mouse - vPos) * (0.025 - dis);
+		//vPos -=  normalize(mouse - vPos) * (0.025 - dis);
 	}
 
 	// distance
@@ -98,23 +97,24 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		// there is another particle near
 		var count = (d.a * 10 - 1);
 		var pos = (d.xy - vPos) / count;
-		var dis = distance(pos, vPos) + 0.0001;
+		var dis = distance(pos, vPos) + 0.1;
 		var force = 1 / pow(dis, 2);
-		var vv = normalize(pos - vPos) * 0.000001 * force;
-		//offset -= vv;
-		//vVel *= 0.5;
+		var vv = (pos - vPos) * 0.01 / dis;
+		offset -= vv;
+		vVel *= 0.99;
 	} else {
-		//vVel *= 0.95;
+		vVel *= 0.9;
 	}
 
 
 
 	vVel += offset;
-	vForce = offset;
+	vForce += offset;
 
 	vPos += vVel;
 
     //vVel *= 0.95;
+
 
 	//if (distance(vec2(0),vPos) > 1) {
 	//	vVel += vec2(0) - vPos * 0.001;
