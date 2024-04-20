@@ -67,25 +67,13 @@ export class DrawParticles {
                         },
                     },
 					{
-                        format: 'rgba32float'
+                        format: 'rgba32uint'
                     },
                 ],
             },
             primitive: {
                 topology: 'triangle-list'
             },
-        });
-
-        this.bindGroup = device.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(0),
-            entries: [{
-                binding: 0,
-                resource: {buffer: this.demo.uniform.buffer}
-            }, {
-				binding: 1,
-				resource: this.demo.colorTexture.createView()
-				
-			}]
         });
 
 		this.createBindGroup();

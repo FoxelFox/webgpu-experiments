@@ -2,8 +2,6 @@ import { mat4, vec2, vec3, vec4 } from "wgpu-matrix";
 import { UniformBuffer } from "../../data/uniform";
 import { device } from "../../global";
 import p5 from 'p5';
-import vertexTextureQuad from "./pipeline/screen-quad.wgsl";
-import debug from "./pipeline/debug.wgsl";
 import { Physics } from "./pipeline/physics";
 import { MultipleBuffer } from "../../data/multiple-buffer";
 import { Distance } from "./pipeline/distance";
@@ -29,9 +27,11 @@ export class KeepDistance {
 	edgeTexture: GPUTexture
 	colorTexture: GPUTexture
 	pickingTexture: GPUTexture
+	readPixelBuffer: GPUBuffer
 	textureSize = 2048 / 4
 	particles: MultipleBuffer
 	canvasWasResized: boolean
+	importer: Import
 
 	t = 0
 	user: User
@@ -53,7 +53,7 @@ export class KeepDistance {
 
 		const loop = async () => {
 
-			await device.queue.onSubmittedWorkDone();
+			//await device.queue.onSubmittedWorkDone();
 			await this.update();
 
 			const now = Date.now();
@@ -113,61 +113,71 @@ export class KeepDistance {
 		this.canvas = document.getElementsByTagName("canvas")[0];
 		console.log("canvas",this.canvas.width)
 
-		const importer = new Import();
-		await importer.start();
+		this.importer = new Import();
+		await this.importer.start();
 
-		this.numParticles = importer.settings.nodes;
+		this.numParticles = this.importer.settings.nodes;
 
 		// data
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create(),
 			mouse: vec4.create(),
 			textureSize: this.textureSize,
-			edgeTextureSize: importer.settings.Size,
-			maxEdges: importer.settings.maxEdges
+			edgeTextureSize: this.importer.settings.Size,
+			maxEdges: this.importer.settings.maxEdges
 			
 		});
 
+		this.readPixelBuffer = device.createBuffer({
+			label: "readPixelBuffer",
+			size: 256,
+			usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+		});
+
 		this.distanceTexture = device.createTexture({
+			label: "distanceTexture",
 			size: [this.textureSize, this.textureSize],
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 			format: 'rgba32float',
 		});
 
 		this.pickingTexture = device.createTexture({
+			label: "pickingTexture",
 			size: [this.canvas.width, this.canvas.height],
-			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-			format: 'rgba32float',
+			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC,
+			format: 'rgba32uint',
 		})
 
 		this.edgeTexture = device.createTexture({
-			size: [importer.settings.maxEdges, importer.settings.Size, importer.settings.Size],
+			label: "edgeTexture",
+			size: [this.importer.settings.maxEdges, this.importer.settings.Size, this.importer.settings.Size],
 			usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
 			format: "rgba32float",
 			dimension: "3d"
 		});
 
 		this.colorTexture = device.createTexture({
-			size: [importer.settings.Size, importer.settings.Size],
+			label: "colorTexture",
+			size: [this.importer.settings.Size, this.importer.settings.Size],
 			usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
 			format: "rgba8unorm"
 		});
 
 		device.queue.writeTexture(
 			{ texture: this.edgeTexture },
-			new Float32Array(importer.settings.data),
+			new Float32Array(this.importer.settings.data),
 			{
-				bytesPerRow: importer.settings.maxEdges * 4 * 4,
-				rowsPerImage: importer.settings.Size
+				bytesPerRow: this.importer.settings.maxEdges * 4 * 4,
+				rowsPerImage: this.importer.settings.Size
 			},
-			[importer.settings.maxEdges, importer.settings.Size, importer.settings.Size]
+			[this.importer.settings.maxEdges, this.importer.settings.Size, this.importer.settings.Size]
 		);
 
 		device.queue.writeTexture(
 			{texture: this.colorTexture},
-			new Int8Array(importer.settings.colors),
-			{bytesPerRow: importer.settings.Size * 4},
-			[importer.settings.Size, importer.settings.Size]
+			new Int8Array(this.importer.settings.colors),
+			{bytesPerRow: this.importer.settings.Size * 4},
+			[this.importer.settings.Size, this.importer.settings.Size]
 		)
 
 		this.particles = new MultipleBuffer(2);
@@ -223,9 +233,10 @@ export class KeepDistance {
 		if (this.canvasWasResized) {
 			this.pickingTexture.destroy();
 			this.pickingTexture = device.createTexture({
+				label: "pickingTexture",
 				size: [this.canvas.width, this.canvas.height],
-				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-				format: 'rgba32float',
+				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC,
+				format: 'rgba32uint',
 			});
 
 
@@ -241,7 +252,7 @@ export class KeepDistance {
 		this.resizeTextures();
 
 
-		const commandEncoder = device.createCommandEncoder();
+		const commandEncoder = device.createCommandEncoder({label: "keep-distance-main"});
 
 		this.physics.update(commandEncoder);
 		this.distance.update(commandEncoder);
@@ -252,8 +263,56 @@ export class KeepDistance {
 			this.drawParticles.update(commandEncoder);
 		}
 
+		await this.readPixelUnderMouse(commandEncoder);
+
+
 		++this.t;
+
+	}
+
+	async readPixelUnderMouse(commandEncoder: GPUCommandEncoder) {
+
+
+		let x = Math.min(Math.max(this.user.mouseX, 0), this.canvas.width -1);
+		let y = Math.min(Math.max(this.user.mouseY, 0), this.canvas.height -1);
+
+
+		// because minimum bytes to read is 256 we have to handle this pixel picking with an offset if we are out of bounds
+		let offset = 0;
+		if ((x + 16) > this.canvas.width) {
+			offset = (this.canvas.width - x -16) * -1;
+		}
+
+
+		commandEncoder.copyTextureToBuffer(
+			{texture: this.pickingTexture, origin: {
+					x: x - offset,
+					y: y
+			}},
+			{buffer: this.readPixelBuffer, bytesPerRow: 256},
+			{width: 16, height: 1}
+		);
+
 		device.queue.submit([commandEncoder.finish()]);
+
+		await this.readPixelBuffer.mapAsync(GPUMapMode.READ)
+		let arrayBuffer = this.readPixelBuffer.getMappedRange();
+		let dataView = new DataView(arrayBuffer);
+		let pixelValue = dataView.getUint32(offset * 16, true); // Read the pixel value as a 32-bit unsigned integer
+
+		if (pixelValue && this.user.mouseDown) {
+			const appid = this.importer.indexToId[pixelValue];
+			const app = this.importer.items[appid];
+
+			const link = document.getElementById("link")
+
+			link.innerHTML = app.name;
+			link.setAttribute("href", `https://store.steampowered.com/app/${appid}`)
+		}
+
+
+		this.readPixelBuffer.unmap();
+
 	}
 
 	get activeParticleBuffer(): GPUBuffer {

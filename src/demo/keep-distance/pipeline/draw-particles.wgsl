@@ -40,7 +40,7 @@ fn vert_main(
 
 struct FragmentOutput {
 	@location(0) color: vec4<f32>,
-	@location(1) id: vec4<f32>
+	@location(1) id: vec4<u32>
 }
 
 @fragment
@@ -48,7 +48,7 @@ fn frag_main(in: VertexOutput) -> FragmentOutput {
 	var output : FragmentOutput;
 
     output.color = in.color;
-	output.id.x = f32(in.id.x);
+	output.id.x = in.id.x;
 
     return output;
 }

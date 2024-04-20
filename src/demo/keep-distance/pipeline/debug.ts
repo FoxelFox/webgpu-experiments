@@ -56,7 +56,7 @@ export class Debug {
 					binding: 2,
 					visibility: GPUShaderStage.FRAGMENT,
 					texture: {
-						sampleType: "unfilterable-float"
+						sampleType: "uint"
 					},
 				}]
 			}),

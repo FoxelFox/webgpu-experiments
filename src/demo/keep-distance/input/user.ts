@@ -10,14 +10,18 @@ export class User {
     mouseDownMovedX = 0
     mouseDownMovedY = 0
     debugMode: boolean = false
+	mouseX: number = 0
+	mouseY: number = 0
+	mouseDown: boolean = false
 
     constructor(private demo: KeepDistance) {
-        window.addEventListener("resize", this.updateCamera);
-        window.addEventListener("mousemove", this.setMousePosition);
-        window.addEventListener("mousedown", this.onmousedown);
-        window.addEventListener("mouseup", this.onmouseup);
-        window.addEventListener("keydown", this.onKeydown);
-        window.addEventListener("wheel", this.onWheel);
+		const canvas = document.getElementsByTagName("canvas")[0];
+		canvas.addEventListener("resize", this.updateCamera);
+		canvas.addEventListener("mousemove", this.setMousePosition);
+		canvas.addEventListener("mousedown", this.onmousedown);
+		canvas.addEventListener("mouseup", this.onmouseup);
+		canvas.addEventListener("keydown", this.onKeydown);
+		canvas.addEventListener("wheel", this.onWheel);
     }
 
     updateCamera = () => {
@@ -33,20 +37,19 @@ export class User {
 
     setMousePosition = (event: MouseEvent) => {
 
-        let mouseX = event.clientX;
-        let mouseY = event.clientY;
+        this.mouseX = event.clientX;
+		this.mouseY = event.clientY;
 
-        let normalizedX = (mouseX / window.innerWidth) * 2 - 1;
-        let normalizedY = -((mouseY / window.innerHeight) * 2 - 1);
+        let normalizedX = (this.mouseX / window.innerWidth) * 2 - 1;
+        let normalizedY = -((this.mouseY / window.innerHeight) * 2 - 1);
 
         let aspectRatio = window.innerWidth / window.innerHeight;
         normalizedX *= aspectRatio;
 
         if (this.demo.uniform.data.mouse[3]) {
-            console.log(mouseX - this.mouseDownPositionX)
             // mouse down, move camera
-            this.movedX = this.mouseDownMovedX + (mouseX  - this.mouseDownPositionX) / window.innerWidth * 2 * aspectRatio / this.zoom;
-            this.movedY = this.mouseDownMovedY + (-mouseY + this.mouseDownPositionY) / window.innerHeight * 2  / this.zoom;
+            this.movedX = this.mouseDownMovedX + (this.mouseX  - this.mouseDownPositionX) / window.innerWidth * 2 * aspectRatio / this.zoom;
+            this.movedY = this.mouseDownMovedY + (-this.mouseY + this.mouseDownPositionY) / window.innerHeight * 2  / this.zoom;
         }
 
         this.demo.uniform.data.mouse[0] = (normalizedX / this.zoom - this.movedX);
@@ -59,11 +62,13 @@ export class User {
         this.mouseDownPositionY = event.clientY;
         this.mouseDownMovedX = this.movedX;
         this.mouseDownMovedY = this.movedY;
-        this.demo.uniform.data.mouse[3] = this.demo.uniform.data.mouse[3] ? 0 : 1;
+        this.demo.uniform.data.mouse[3] = 1;
+		this.mouseDown = true;
     }
 
     onmouseup = () => {
-        this.demo.uniform.data.mouse[3] = this.demo.uniform.data.mouse[3] ? 0 : 1;
+        this.demo.uniform.data.mouse[3] = 0;
+		this.mouseDown = false;
     }
 
     onKeydown = (event: KeyboardEvent) => {
