@@ -28,7 +28,7 @@ export class KeepDistance {
 	colorTexture: GPUTexture
 	pickingTexture: GPUTexture
 	readPixelBuffer: GPUBuffer
-	textureSize = 2048 / 4
+	textureSize = 2048 / 1
 	particles: MultipleBuffer
 	canvasWasResized: boolean
 	importer: Import
@@ -259,11 +259,13 @@ export class KeepDistance {
 
 		if (this.user.debugMode) {
 			this.debug.update(commandEncoder);
+			device.queue.submit([commandEncoder.finish()]);
 		} else {
 			this.drawParticles.update(commandEncoder);
+			await this.readPixelUnderMouse(commandEncoder);
 		}
 
-		await this.readPixelUnderMouse(commandEncoder);
+
 
 
 		++this.t;
@@ -305,9 +307,11 @@ export class KeepDistance {
 			const app = this.importer.items[appid];
 
 			const link = document.getElementById("link")
-
-			link.innerHTML = app.name;
 			link.setAttribute("href", `https://store.steampowered.com/app/${appid}`)
+
+			const img = document.getElementById("img");
+			img.setAttribute("src",`https://steamcdn-a.akamaihd.net/steam/apps/${appid}/header.jpg`)
+
 		}
 
 

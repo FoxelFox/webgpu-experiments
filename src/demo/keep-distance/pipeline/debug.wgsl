@@ -1,6 +1,4 @@
 @binding(0) @group(0)var gBufferDistance: texture_2d<f32>;
-@binding(1) @group(0) var edges: texture_3d<f32>;
-@binding(2) @group(0) var id: texture_2d<f32>;
 
 @fragment
 fn main(
@@ -9,34 +7,20 @@ fn main(
 	var result : vec4f;
 
 
-
-    result = textureLoad(
-        edges,
-        vec3i(floor(vec3(0,coord.xy))),
-        0
-    );
-
-    result.x = result.x / 256;
-    result.y = result.y / 256;
-
-
 	result = textureLoad(
 		gBufferDistance,
 		vec2i(floor(coord.xy)),
 		0
 	);
 
-	result = textureLoad(
-		id,
-		vec2i(floor(coord.xy)),
-		0
-	);
-
-	// if (result.a < 0.101) {
-	// 	result = vec4(0);
-	// } else {
-	// 	result = vec4(result.xy,0,1);
-	// }
+	 if (result.a > 0.01) {
+	 	result.x = 1.0;
+	 	result.y = 1.0;
+	 	result.z = 1.0;
+	 }
+	 if (result.a > 0.11) {
+	 	result = vec4(1,0,0,1);
+	 }
 
 	result.x = result.x;
 	//result.y = 255;

@@ -20,7 +20,7 @@ export class User {
 		canvas.addEventListener("mousemove", this.setMousePosition);
 		canvas.addEventListener("mousedown", this.onmousedown);
 		canvas.addEventListener("mouseup", this.onmouseup);
-		canvas.addEventListener("keydown", this.onKeydown);
+		window.addEventListener("keydown", this.onKeydown);
 		canvas.addEventListener("wheel", this.onWheel);
     }
 

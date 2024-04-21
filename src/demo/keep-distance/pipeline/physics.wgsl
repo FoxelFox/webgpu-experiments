@@ -55,16 +55,16 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
             var ePos = particlesA.particles[i32(i32(edge.y) * i32(myUniform.edgesTextureSize) + i32(edge.x))].pos;
 
-            var dis = distance(ePos, vPos) + 0.001;
-            var vv = (ePos - vPos) * 0.001 * edge.z * dis;
+            var dis = distance(ePos, vPos) + 0.01;
+            var force = 0.001 / pow(dis, 2) + 0.0001;
+            var vv = (ePos - vPos) * force * 0.001;
 
-            //if (dis > 0.1) {
+            if (dis > 0.001) {
               vVel += vv;
-            //}
+            } else {
+            	//vVel -= vv;
 
-              // vPos -= vv * 0.001;
-               //vVel *= 0.98;
-           //}
+            }
         }
 	}
 
@@ -81,29 +81,50 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		//vPos -=  normalize(mouse - vPos) * (0.025 - dis);
 	}
 
-	// distance
-	var d = textureLoad(
-		distanceTexture,
-		vec2i(
-			i32((  vPos.x * 0.5 + 0.5) * myUniform.textureSize),
-			i32(((-vPos.y) * 0.5 + 0.5) * myUniform.textureSize)
-			),
-		0
-	);
+	// distance multi sampled
+	var d : vec4<f32>;
+	for (var x = -2i; x < 3i; x++) {
+		for (var y = -2i; y < 3i; y++) {
+			d += textureLoad(
+				distanceTexture,
+				vec2i(
+					i32((  vPos.x * 0.5 + 0.5) * myUniform.textureSize) + x,
+					i32(((-vPos.y) * 0.5 + 0.5) * myUniform.textureSize) + y
+					),
+				0
+			);
+		}
+	}
 
+	// distance single sample
+//	var d = textureLoad(
+//		distanceTexture,
+//		vec2i(
+//			i32((  vPos.x * 0.5 + 0.5) * myUniform.textureSize),
+//			i32(((-vPos.y) * 0.5 + 0.5) * myUniform.textureSize)
+//			),
+//		0
+//	);
 
 
 	if (d.a > 0.101) {
 		// there is another particle near
 		var count = (d.a * 10 - 1);
 		var pos = (d.xy - vPos) / count;
-		var dis = distance(pos, vPos) + 0.1;
-		var force = 1 / pow(dis, 2);
-		var vv = (pos - vPos) * 0.01 / dis;
+		var dis = distance(pos, vPos) + 0.0001;
+		var force = 0.001 * count / pow(dis, 2);
+		var vv = (pos - vPos) * 0.000001 * force;
 		offset -= vv;
-		vVel *= 0.99;
+		//vVel *= 0.99;
 	} else {
-		vVel *= 0.9;
+		//vVel *= 0.9;
+	}
+
+
+	// stay in field
+	var distanceToEnd = distance(vec2(0), vPos);
+	if (distanceToEnd > 0.99) {
+		offset += (vec2(0) - vPos) * pow(distanceToEnd + 0.001, 2) * 0.0001;
 	}
 
 
@@ -113,7 +134,9 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	vPos += vVel;
 
-    //vVel *= 0.95;
+    vVel *= 0.95;
+
+
 
 
 	//if (distance(vec2(0),vPos) > 1) {
