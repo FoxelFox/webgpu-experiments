@@ -254,8 +254,10 @@ export class KeepDistance {
 
 		const commandEncoder = device.createCommandEncoder({label: "keep-distance-main"});
 
-		this.physics.update(commandEncoder);
-		this.distance.update(commandEncoder);
+		if (!this.user.pause) {
+			this.physics.update(commandEncoder);
+			this.distance.update(commandEncoder);
+		}
 
 		if (this.user.debugMode) {
 			this.debug.update(commandEncoder);
@@ -266,9 +268,10 @@ export class KeepDistance {
 		}
 
 
+		if (!this.user.pause) {
+			++this.t;
+		}
 
-
-		++this.t;
 
 	}
 
@@ -310,7 +313,13 @@ export class KeepDistance {
 			link.setAttribute("href", `https://store.steampowered.com/app/${appid}`)
 
 			const img = document.getElementById("img");
-			img.setAttribute("src",`https://steamcdn-a.akamaihd.net/steam/apps/${appid}/header.jpg`)
+
+
+			const url = `https://steamcdn-a.akamaihd.net/steam/apps/${appid}/header.jpg`;
+			if (img.getAttribute("src") !== url) {
+				img.setAttribute("src",url)
+			}
+
 
 		}
 

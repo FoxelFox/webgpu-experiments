@@ -13,6 +13,7 @@ export class User {
 	mouseX: number = 0
 	mouseY: number = 0
 	mouseDown: boolean = false
+	pause: boolean = false
 
     constructor(private demo: KeepDistance) {
 		const canvas = document.getElementsByTagName("canvas")[0];
@@ -22,7 +23,13 @@ export class User {
 		canvas.addEventListener("mouseup", this.onmouseup);
 		window.addEventListener("keydown", this.onKeydown);
 		canvas.addEventListener("wheel", this.onWheel);
+		document.getElementById("pause").onclick = this.togglePause;
     }
+
+	togglePause = () => {
+		this.pause = !this.pause;
+		document.getElementById("pause").innerHTML = this.pause ? "resume" : "pause"
+	}
 
     updateCamera = () => {
         this.demo.canvas.width = window.innerWidth * devicePixelRatio;

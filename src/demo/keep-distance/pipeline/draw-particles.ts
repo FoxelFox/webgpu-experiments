@@ -118,7 +118,7 @@ export class DrawParticles {
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(this.pipeline);
         passEncoder.setBindGroup(0, this.bindGroup);
-        passEncoder.setVertexBuffer(0, quad(0.001 / Math.pow(this.demo.user.zoom, 0.75)));
+        passEncoder.setVertexBuffer(0, quad(0.002 / Math.pow(this.demo.user.zoom, 0.5)));
         passEncoder.setVertexBuffer(1, this.demo.activeParticleBuffer);
         passEncoder.draw(6, this.demo.numParticles, 0, 0);
         passEncoder.end();
