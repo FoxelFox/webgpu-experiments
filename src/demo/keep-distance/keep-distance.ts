@@ -306,16 +306,13 @@ export class KeepDistance {
 		let pixelValue = dataView.getUint32(offset * 16, true); // Read the pixel value as a 32-bit unsigned integer
 
 		if (pixelValue && this.user.mouseDown) {
-			const appid = this.importer.indexToId[pixelValue];
-			const app = this.importer.items[appid];
-
+			const id = this.importer.indexToId[pixelValue];
 			const link = document.getElementById("link")
-			link.setAttribute("href", `https://store.steampowered.com/app/${appid}`)
+			link.setAttribute("href", `https://store.steampowered.com/app/${id}`)
 
+
+			const url = `https://steamcdn-a.akamaihd.net/steam/apps/${id}/header.jpg`;
 			const img = document.getElementById("img");
-
-
-			const url = `https://steamcdn-a.akamaihd.net/steam/apps/${appid}/header.jpg`;
 			if (img.getAttribute("src") !== url) {
 				img.setAttribute("src",url)
 			}

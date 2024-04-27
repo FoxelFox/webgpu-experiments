@@ -7,8 +7,11 @@ struct VertexOutput {
 }
 
 struct MyUniform {
-    view: mat4x4<f32>,
-    blub: vec4<f32>
+	view: mat4x4<f32>,
+	blub: vec4<f32>,
+	textureSize: f32,
+	edgesTextureSize: f32,
+	maxEdges: f32
 }
 
 @binding(0) @group(0) var <uniform> myUniform: MyUniform;
@@ -29,7 +32,7 @@ fn vert_main(
 
     var color = textureLoad(
 		colors,
-		vec2i(vec2(instanceIdx % 256,instanceIdx / 256)),
+		vec2i(vec2(instanceIdx % u32(myUniform.edgesTextureSize),instanceIdx / u32(myUniform.edgesTextureSize))),
 		0
 	);
 

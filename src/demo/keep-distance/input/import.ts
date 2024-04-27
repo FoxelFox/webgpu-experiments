@@ -92,7 +92,7 @@ export class Import {
                     const index: number = this.map[edge.conc].id;
                     let y = Math.floor(index / base);
                     let x = index % base;
-                    edges.push([x, y, edge.force / this.maxForce, 0])
+                    edges.push([x, y, edge.force, 0])
                 }
             }
 
