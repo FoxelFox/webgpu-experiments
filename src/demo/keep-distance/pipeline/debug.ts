@@ -42,7 +42,7 @@ export class Debug {
 			entries: [
 				{
 					binding: 0,
-					resource: this.demo.distanceTexture.createView()
+					resource: this.demo.scaledDistanceTexture.createView()
 				}
 			]
 		});

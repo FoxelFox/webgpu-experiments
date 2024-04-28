@@ -9,6 +9,7 @@ import { Debug } from "./pipeline/debug";
 import { DrawParticles } from "./pipeline/draw-particles";
 import { User } from "./input/user";
 import { Import } from "./input/import";
+import {Scale} from "./pipeline/scale";
 
 
 
@@ -24,6 +25,7 @@ export class KeepDistance {
 	uniform: UniformBuffer
 	context: GPUCanvasContext
 	distanceTexture: GPUTexture
+	scaledDistanceTexture: GPUTexture
 	edgeTexture: GPUTexture
 	colorTexture: GPUTexture
 	pickingTexture: GPUTexture
@@ -40,6 +42,7 @@ export class KeepDistance {
 
 	physics: Physics
 	distance: Distance
+	scale: Scale
 	debug: Debug
 	drawParticles: DrawParticles
 
@@ -138,14 +141,21 @@ export class KeepDistance {
 			label: "distanceTexture",
 			size: [this.textureSize, this.textureSize],
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-			format: 'rgba32float',
+			format: "rgba32float",
+		});
+
+		this.scaledDistanceTexture = device.createTexture({
+			label: "distanceTextureScaled",
+			size: [128,128],
+			usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING,
+			format: "rgba32float"
 		});
 
 		this.pickingTexture = device.createTexture({
 			label: "pickingTexture",
 			size: [this.canvas.width, this.canvas.height],
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC,
-			format: 'rgba32uint',
+			format: "rgba32uint",
 		})
 
 		this.edgeTexture = device.createTexture({
@@ -199,6 +209,7 @@ export class KeepDistance {
 		// pipelines
 		this.physics = new Physics(this);
 		this.distance = new Distance(this);
+		this.scale = new Scale(this);
 		this.debug = new Debug(this);
 		this.drawParticles = new DrawParticles(this);
 
@@ -257,6 +268,7 @@ export class KeepDistance {
 		if (!this.user.pause) {
 			this.physics.update(commandEncoder);
 			this.distance.update(commandEncoder);
+			this.scale.update(commandEncoder);
 		}
 
 		if (this.user.debugMode) {

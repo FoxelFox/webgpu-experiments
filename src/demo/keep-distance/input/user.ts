@@ -81,6 +81,11 @@ export class User {
     onKeydown = (event: KeyboardEvent) => {
         if (event.code === "KeyD") {
             this.debugMode = !this.debugMode
+
+
+			document.getElementById("info")
+				.setAttribute("hidden", this.debugMode.toString());
+
         }
     }
 
