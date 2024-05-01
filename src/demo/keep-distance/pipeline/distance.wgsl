@@ -24,14 +24,14 @@ fn vert_main(
 	var kann_weg = myUniform.view;
 	var output : VertexOutput;
 	output.position = vec4<f32>(position.xy + pPos, 0.0, 1.0) ;
-	output.color = vec4(1,1,1, 0.1);
+	output.color = vec4(1,1,1,1);
 	output.quad_pos = pPos.xy;
 	return output;
 }
 
 @fragment
 fn frag_main(in : VertexOutput) -> @location(0) vec4<f32> {
-	var color = vec4(in.quad_pos.xy, 0, 0.1);
+	var color = vec4(in.quad_pos.xy, 0, 1);
 
 	return color;
 }

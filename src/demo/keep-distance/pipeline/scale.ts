@@ -40,8 +40,9 @@ export class Scale {
 		passEncoder.setPipeline(this.pipeline);
 		passEncoder.setBindGroup(0, this.bindGroup);
 		passEncoder.dispatchWorkgroups(
-			this.demo.scaledDistanceTexture.width / 8,
-			this.demo.scaledDistanceTexture.height / 8
+			16,16
+			//this.demo.scaledDistanceTexture.width / 8,
+			//this.demo.scaledDistanceTexture.height / 8
 		);
 		passEncoder.end();
 	}

@@ -31,7 +31,8 @@ struct MyUniform {
 @binding(1) @group(0) var<storage, read_write> particlesB : Particles;
 @binding(2) @group(0) var <uniform> myUniform: MyUniform;
 @binding(3) @group(0) var distanceTexture: texture_2d<f32>;
-@binding(4) @group(0) var edges: texture_3d<f32>;
+@binding(4) @group(0) var scaledDistanceTexture: texture_2d<f32>;
+@binding(5) @group(0) var edges: texture_3d<f32>;
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
@@ -78,47 +79,94 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		//offset += vv * 1.1;
 	} else {
 
-		//vPos -=  normalize(mouse - vPos) * (0.025 - dis);
+		vPos -=  normalize(mouse - vPos) * (0.025 - dis);
 	}
+
+	var uv = vec2i(
+		i32((( vPos.x + 1.0) * 0.5) * 128),
+		i32(((-vPos.y + 1.0) * 0.5) * 128)
+	);
+
+
 
 	// distance multi sampled
 	var d : vec4<f32>;
-	for (var x = -2i; x < 3i; x++) {
-		for (var y = -2i; y < 3i; y++) {
-			d += textureLoad(
-				distanceTexture,
-				vec2i(
-					i32((  vPos.x * 0.5 + 0.5) * myUniform.textureSize) + x,
-					i32(((-vPos.y) * 0.5 + 0.5) * myUniform.textureSize) + y
-					),
+	for (var x = -4i; x < 5i; x++) {
+		for (var y = -4i; y < 5i; y++) {
+			if (x == 0 && y == 0) {
+				continue;
+			}
+
+			d = textureLoad(
+				scaledDistanceTexture,
+				uv + vec2i(x,y),
 				0
 			);
+
+			if (d.a > 0.01) {
+				// there is another particle near
+				var count = d.a;
+				var pos = d.xy / count;
+				var dis = distance(pos, vPos) + 0.0001;
+				var force = count / pow(dis, 2.0);
+				var vv = (pos - vPos) * 0.0000000001 * force;
+
+				//if (count > 50) {
+					offset -= vv;
+				//}
+
+
+				//vVel *= 0.99;
+			} else {
+				//vVel *= 0.9;
+			}
 		}
 	}
 
-	// distance single sample
-//	var d = textureLoad(
-//		distanceTexture,
-//		vec2i(
-//			i32((  vPos.x * 0.5 + 0.5) * myUniform.textureSize),
-//			i32(((-vPos.y) * 0.5 + 0.5) * myUniform.textureSize)
-//			),
-//		0
-//	);
+	// todo need seperate function for this
 
 
-	if (d.a > 0.101) {
-		// there is another particle near
-		var count = (d.a * 10 - 1);
-		var pos = (d.xy - vPos) / count;
-		var dis = distance(pos, vPos) + 0.0001;
-		var force = 0.001 * count / pow(dis, 2);
-		var vv = (pos - vPos) * 0.000001 * force;
-		offset -= vv;
-		//vVel *= 0.99;
-	} else {
-		//vVel *= 0.9;
+	// distance single sampled
+	uv = vec2i(
+		i32((  vPos.x * 0.5 + 0.5) * 128.0),
+		i32(((-vPos.y) * 0.5 + 0.5) * 128.0)
+	);
+
+	var uvExact = vec2i(
+		i32((  vPos.x * 0.5 + 0.5) * myUniform.textureSize),
+		i32(((-vPos.y) * 0.5 + 0.5) * myUniform.textureSize)
+	);
+
+	var factor = i32(myUniform.textureSize) / 128;
+	uv *= factor;
+
+	for (var x = 0i; x < factor; x++) {
+		for (var y = 0i; y < factor; y++) {
+
+			var uvXY = uv + vec2i(x,y);
+			var selfOffset = 0.0;
+
+			if(uvXY.x == uvExact.x && uvXY.y == uvExact.y) {
+				selfOffset = 1.0;
+			}
+
+			d = textureLoad(distanceTexture, uvXY, 0);
+
+			if (d.a > (selfOffset+0.1)) {
+				// there is another particle near
+				var count = (d.a - selfOffset);
+				var pos = (d.xy - vPos * selfOffset) / count;
+				var dis = distance(pos, vPos) + 0.0001;
+				var force = count / pow(dis, 2.0);
+				var vv = (pos - vPos) * 0.0000000001 * force;
+				offset -= vv;
+				//vVel *= 0.99;
+			} else {
+				//vVel *= 0.9;
+			}
+		}
 	}
+
 
 
 	// stay in field

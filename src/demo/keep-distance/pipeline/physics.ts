@@ -52,6 +52,10 @@ export class Physics {
 
 				}, {
 					binding: 4,
+					resource: this.demo.scaledDistanceTexture.createView()
+
+				}, {
+					binding: 5,
 					resource: this.demo.edgeTexture.createView()
 
 				}],
