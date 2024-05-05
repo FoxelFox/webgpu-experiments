@@ -79,7 +79,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		//offset += vv * 1.1;
 	} else {
 
-		vPos -=  normalize(mouse - vPos) * (0.025 - dis);
+		//vPos -=  normalize(mouse - vPos) * (0.025 - dis);
 	}
 
 	var uv = vec2i(

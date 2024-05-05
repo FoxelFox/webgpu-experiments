@@ -46,6 +46,7 @@ export class Import {
         let decoder = new TextDecoder();
         let buffer = '';
         let first = true;
+		let count = 0;
 
         while (true) {
             const { done, value } = await stream.read();
@@ -66,6 +67,9 @@ export class Import {
 
             // Process complete lines
             this.parseConnections(lines);
+			count += lines.length;
+
+			document.getElementById("score").innerHTML = `Loading ${count} Connections ...`
         }
 
         const data = [];
