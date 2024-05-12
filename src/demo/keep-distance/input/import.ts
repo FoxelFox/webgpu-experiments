@@ -161,6 +161,11 @@ export class Import {
                 continue;
             }
 
+			// filter self references
+			if (v[0] === v[1]) {
+				continue;
+			}
+
             let prem;
             if (this.map[v[0]]) {
                 prem = this.map[v[0]];

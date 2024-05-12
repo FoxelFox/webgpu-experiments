@@ -30,7 +30,7 @@ export class KeepDistance {
 	colorTexture: GPUTexture
 	pickingTexture: GPUTexture
 	readPixelBuffer: GPUBuffer
-	textureSize = 2048 / 1
+	textureSize = 2048
 	particles: MultipleBuffer
 	canvasWasResized: boolean
 	importer: Import
@@ -94,8 +94,8 @@ export class KeepDistance {
 		const vx = angularVelocity * (r) * Math.cos(theta)
 		const vy = angularVelocity * (r) * Math.sin(theta)
 
-		//return {x: vx, y: vy};
-		return { x: 0, y: 0 };
+		return {x: vx, y: vy};
+		//return { x: 0, y: 0 };
 	}
 
 	generateRandomParticle(radius: number, noise: p5): { x: number, y: number } {
@@ -120,6 +120,7 @@ export class KeepDistance {
 		await this.importer.start();
 
 		this.numParticles = this.importer.settings.nodes;
+		//this.numParticles = MAX_PARTICLES
 
 		// data
 		this.uniform = new UniformBuffer({

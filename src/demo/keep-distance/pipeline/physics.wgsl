@@ -55,17 +55,16 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
         if (edge.z > 0.1) {
 
             var ePos = particlesA.particles[i32(i32(edge.y) * i32(myUniform.edgesTextureSize) + i32(edge.x))].pos;
+            var dis = distance(ePos, vPos) + 0.00001;
+            var vv = (ePos - vPos) * dis * 0.0001;
 
-            var dis = distance(ePos, vPos) + 0.01;
-            var force = 0.001 / pow(dis, 2) + 0.0001;
-            var vv = (ePos - vPos) * force * 0.001;
 
-            if (dis > 0.001) {
+            //if (dis > 0.001) {
               vVel += vv;
-            } else {
+            //} else {
             	//vVel -= vv;
 
-            }
+            //}
         }
 	}
 
@@ -91,8 +90,8 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	// distance multi sampled
 	var d : vec4<f32>;
-	for (var x = -4i; x < 5i; x++) {
-		for (var y = -4i; y < 5i; y++) {
+	for (var x = -16i; x < 17i; x++) {
+		for (var y = -16i; y < 17i; y++) {
 			if (x == 0 && y == 0) {
 				continue;
 			}
@@ -107,9 +106,9 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 				// there is another particle near
 				var count = d.a;
 				var pos = d.xy / count;
-				var dis = distance(pos, vPos) + 0.0001;
+				var dis = distance(pos, vPos) + 0.00001;
 				var force = count / pow(dis, 2.0);
-				var vv = (pos - vPos) * 0.0000000001 * force;
+				var vv = (pos - vPos) * 0.00000000001 * force;
 
 				//if (count > 50) {
 					offset -= vv;
@@ -158,7 +157,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 				var pos = (d.xy - vPos * selfOffset) / count;
 				var dis = distance(pos, vPos) + 0.0001;
 				var force = count / pow(dis, 2.0);
-				var vv = (pos - vPos) * 0.0000000001 * force;
+				var vv = (pos - vPos) * 0.00000000001 * force;
 				offset -= vv;
 				//vVel *= 0.99;
 			} else {
@@ -182,7 +181,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 	vPos += vVel;
 
-    vVel *= 0.95;
+    vVel *= 0.99;
 
 
 
