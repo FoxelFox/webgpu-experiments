@@ -112,6 +112,29 @@ export class KeepDistance {
 
 	async init() {
 
+		document.body.innerHTML =`
+<canvas>.foo</canvas>
+<div
+	id="info"
+	style="
+		position: absolute;
+		top: 0px;
+		left: 0px;
+		color: white;
+		backdrop-filter: hue-rotate(300deg) blur(8px) brightness(2);
+		padding: 0px 33px 0px 0px;
+		border-bottom-right-radius: 32px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+	"
+>
+	<div style="height: 32px; align-items: center; display: flex;" id="score"></div>
+	<a id="link" target="_blank" ><img style="height: 215px" id="img"/></a>
+	<button id="pause">pause</button>
+</div>
+`;
+
 		
 		this.canvas = document.getElementsByTagName("canvas")[0];
 		console.log("canvas",this.canvas.width)

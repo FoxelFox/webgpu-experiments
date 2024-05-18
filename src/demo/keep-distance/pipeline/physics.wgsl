@@ -97,7 +97,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 				var pos = d.xy / count;
 				var dis = distance(pos, vPos) + 0.00001;
 				var force = count / pow(dis, 2.0);
-				offset -= (pos - vPos) * 0.000000001 * force;
+				offset -= (pos - vPos) * 0.0000000001 * force;
 			}
 		}
 	}
@@ -134,7 +134,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 				var pos = (d.xy - vPos * selfOffset) / count;
 				var dis = distance(pos, vPos) + 0.00001;
 				var force = count / pow(dis, 2.0);
-				var vv = (pos - vPos) * 0.0000000001 * force;
+				var vv = (pos - vPos) * 0.00000000001 * force;
 				offset -= vv;
 			}
 		}

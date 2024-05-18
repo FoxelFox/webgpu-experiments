@@ -143,6 +143,11 @@ export class Galaxy {
 
 	init() {
 
+		document.body.innerHTML =`
+<div id="score" style="color: white"></div>
+<canvas></canvas>
+`;
+
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create(),
 			blub: vec4.create()
