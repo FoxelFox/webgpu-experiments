@@ -2,7 +2,7 @@
   "compilerOptions": {
     "sourceMap": true,
     "module": "esNext",
-    "target": "es6",
+    "target": "es2022",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "lib": [

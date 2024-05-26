@@ -6,7 +6,7 @@ import {KeepDistance} from "../keep-distance";
 export class Distance {
 
     pipeline: GPURenderPipeline
-    bindGroup
+    bindGroup: GPUBindGroup
 
     constructor(private demo: KeepDistance) {
         this.pipeline = device.createRenderPipeline({

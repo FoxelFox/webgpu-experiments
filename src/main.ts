@@ -4,13 +4,15 @@ import {greet} from "../pkg";
 import {Galaxy} from "./demo/galaxy/galaxy";
 import {init} from "./global";
 import {KeepDistance} from "./demo/keep-distance/keep-distance";
+import {Terrain} from "./demo/terrain/terrain";
 
 enum Demo {
 	Galaxy,
-	KeepDistance
+	KeepDistance,
+	Terrain,
 }
 
-const activeDemo: Demo = Demo.KeepDistance;
+const activeDemo: Demo = Demo.Terrain;
 
 async function main() {
 	await init();
@@ -22,7 +24,10 @@ async function main() {
 		case Demo.KeepDistance:
 			await new KeepDistance().start();
 			break;
+		case Demo.Terrain:
+			await new Terrain().start();
+			break;
 	}
 }
 
-main().then();
+await main();
