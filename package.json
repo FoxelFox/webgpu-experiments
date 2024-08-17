@@ -1,20 +1,15 @@
 {
   "dependencies": {
     "@webgpu/types": "^0.1.32",
-    "copy-webpack-plugin": "^11.0.0",
     "esbuild": "^0.17.18",
     "esbuild-plugin-glsl": "^1.2.1",
-    "esbuild-plugin-wasm": "^1.1.0",
     "p5": "^1.6.0",
     "wgpu-matrix": "^2.2.1"
   },
   "scripts": {
-    "build": "bun run wasm-pack && bun run build-js",
-    "build-js": "bun esbuild.ts",
-    "wasm-pack": "wasm-pack build --release"
+    "build": "bun esbuild.ts"
   },
   "devDependencies": {
-    "@types/bun": "^1.0.12",
-    "esbuild-plugin-wasm-pack": "^1.1.0"
+    "@types/bun": "^1.0.12"
   }
 }

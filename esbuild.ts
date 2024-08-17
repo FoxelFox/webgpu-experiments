@@ -1,7 +1,5 @@
 import {context} from "esbuild";
 import {glsl} from "esbuild-plugin-glsl";
-import {wasmLoader} from "esbuild-plugin-wasm";
-
 
 async function build() {
 	let ctx = await context({
@@ -14,8 +12,7 @@ async function build() {
 		tsconfig: "tsconfig.json",
 		minify: false,
 		plugins: [
-			glsl({minify: false}),
-			wasmLoader()
+			glsl({minify: false})
 		]
 	}).catch(() => process.exit(1));
 

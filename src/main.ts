@@ -1,6 +1,3 @@
-import {greet} from "../pkg";
-//console.log(greet)
-
 import {Galaxy} from "./demo/galaxy/galaxy";
 import {init} from "./global";
 import {KeepDistance} from "./demo/keep-distance/keep-distance";
