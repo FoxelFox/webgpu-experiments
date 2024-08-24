@@ -4,10 +4,14 @@ import {device} from "../../global";
 
 export class Terrain {
 
-	canvas: HTMLCanvasElement;
-	context: GPUCanvasContext;
-	uniform: UniformBuffer;
+	canvas: HTMLCanvasElement
+	context: GPUCanvasContext
+	uniform: UniformBuffer
 
+	vertices: Float32Array
+	indices: Uint16Array
+	vertexBuffer: GPUBuffer
+	indexBuffer: GPUBuffer
 
 	setCanvasSize = () => {
 		this.canvas.width = window.innerWidth * devicePixelRatio;
@@ -32,6 +36,32 @@ export class Terrain {
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create()
 		});
+
+
+		this.vertices = new Float32Array([
+			-1.0, -1.0, 0.0,
+			1.0, -1.0, 0.0,
+			-1.0,  1.0, 0.0,
+			1.0,  1.0, 0.0,
+		]);
+
+		this.indices = new Uint16Array([
+			0, 1, 2,
+			2, 1, 3,
+		]);
+
+		this.vertexBuffer = device.createBuffer({
+			size: this.vertices.byteLength,
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+		});
+		device.queue.writeBuffer(this.vertexBuffer, 0, this.vertices);
+
+		this.indexBuffer = device.createBuffer({
+			size: this.indices.byteLength,
+			usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+		});
+
+		device.queue.writeBuffer(this.indexBuffer, 0, this.indices);
 
 		this.canvas = document.getElementsByTagName("canvas")[0];
 		this.setCanvasSize();
