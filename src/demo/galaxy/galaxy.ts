@@ -21,6 +21,7 @@ export class Galaxy {
 	particleBindGroups: GPUBindGroup[]
 	particleBuffers: GPUBuffer[]
 	grid: Grid
+	quad: GPUBuffer
 
 	difficulty: number = 1;
 
@@ -147,6 +148,8 @@ export class Galaxy {
 <div id="score" style="color: white"></div>
 <canvas></canvas>
 `;
+
+		this.quad = quad(0.005);
 
 		this.uniform = new UniformBuffer({
 			viewMatrix: mat4.create(),
@@ -290,7 +293,7 @@ export class Galaxy {
 			const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 			passEncoder.setPipeline(this.pipeline);
 			passEncoder.setBindGroup(0, this.renderUniformBindGroup);
-			passEncoder.setVertexBuffer(0, quad(0.005));
+			passEncoder.setVertexBuffer(0, this.quad);
 			passEncoder.setVertexBuffer(1, this.activeParticleBuffer);
 			passEncoder.draw(6, this.numParticles, 0, 0);
 			passEncoder.end();

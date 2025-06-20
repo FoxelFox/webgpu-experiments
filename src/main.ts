@@ -9,7 +9,7 @@ enum Demo {
 	Terrain,
 }
 
-const activeDemo: Demo = Demo.Terrain;
+const activeDemo: Demo = Demo.Galaxy;
 
 async function main() {
 	await init();
